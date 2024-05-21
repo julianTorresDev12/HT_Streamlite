@@ -57,7 +57,9 @@ translations = {
         "activity": "Actividad a realizar",
         "location": "Ubicación",
         "submit": "Enviar",
-        "check_in_time": "Hora de check-in"
+        "check_in_time": "Hora de check-in",
+        "clock_out_time": "Hora de clock-out",
+        "total_hours_worked": "Total de horas trabajadas"
     },
     "en": {
         "title": "Hootsi Application",
@@ -96,7 +98,9 @@ translations = {
         "activity": "Activity to perform",
         "location": "Location",
         "submit": "Submit",
-        "check_in_time": "Check-in time"
+        "check_in_time": "Check-in time",
+        "clock_out_time": "Clock-out time",
+        "total_hours_worked": "Total hours worked"
     }
 }
 
@@ -107,6 +111,10 @@ lang = st.sidebar.selectbox("Select a language", ["es", "en"])
 t = translations[lang]
 
 st.title(t['title'])  # Aseguramos que el título esté siempre en la parte superior
+
+# Variables globales para almacenar horas de check-in y check-out
+check_in_times = {}
+check_out_times = {}
 
 # Definir las funciones de notificación
 def notificate_check_in(lang):
@@ -119,29 +127,35 @@ def notificate_check_in(lang):
     location = st.text_input(t['location'])
     
     if st.button(t['submit']):
-        check_in_time = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
+        check_in_time = dt.datetime.now(tz=pytz.timezone('UTC'))
+        check_in_times[name] = check_in_time
         st.write(f"{t['name']}: {name}")
         st.write(f"{t['role']}: {role}")
         st.write(f"{t['activity']}: {activity}")
         st.write(f"{t['location']}: {location}")
-        st.write(f"{t['check_in_time']}: {check_in_time}")
+        st.write(f"{t['check_in_time']}: {check_in_time.isoformat()}")
 
 def notificate_clock_out(lang):
-    email_service = "model_postmark"  # Placeholder
-    us_holidays = holidays.US()
-    today_date = dt.datetime.now(tz=pytz.timezone('UTC'))
-
-    users = [{"id": 315, "is_clocked_in": 1, "time_zone": "America/New_York", "email": "julian.torres@ahtglobal.com", "first_name": "User", "warehouse_id": 1, "tenant_id": 1}]
-
-    if today_date not in us_holidays:
-        for user in users:
-            if user['id'] == 315 and user['is_clocked_in'] == 1:  # Recordatorio de clock out
-                user_tz = pytz.timezone(user['time_zone'])
-                utc_now = dt.datetime.now()
-                user_now = utc_now.astimezone(user_tz)
-                if user_now.hour == 20 or True:
-                    st.write(f"Sending reminder email to: {user['email']}")
-                    st.write("Hootsi would like to remind you to clock out for the day.")
+    t = translations[lang]
+    st.header(t['clock_out_notification'])
+    
+    name = st.text_input(t['name'])
+    role = st.text_input(t['role'])
+    activity = st.text_input(t['activity'])
+    location = st.text_input(t['location'])
+    
+    if st.button(t['submit']):
+        check_out_time = dt.datetime.now(tz=pytz.timezone('UTC'))
+        check_out_times[name] = check_out_time
+        st.write(f"{t['name']}: {name}")
+        st.write(f"{t['role']}: {role}")
+        st.write(f"{t['activity']}: {activity}")
+        st.write(f"{t['location']}: {location}")
+        st.write(f"{t['clock_out_time']}: {check_out_time.isoformat()}")
+        
+        if name in check_in_times:
+            total_hours = (check_out_time - check_in_times[name]).total_seconds() / 3600
+            st.write(f"{t['total_hours_worked']}: {total_hours:.2f} horas")
 
 # Función de seguimiento de inventario
 def track_inventory(lang):
@@ -266,4 +280,3 @@ elif option == t['inventory_tracking']:
     track_inventory(lang)
 elif option == t['work_hours_tracking']:
     track_work_hours(lang)
-
