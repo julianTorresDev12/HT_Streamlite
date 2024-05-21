@@ -28,6 +28,13 @@ us_cities = [
     "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Washington, DC"
 ]
 
+# Roles y cargos
+roles = {
+    "Administrative": ["CEO", "CFO", "COO", "VP of Operations", "Administrative Manager", "Office Assistant", "HR Manager", "Accountant", "Marketing Manager", "Analyst"],
+    "IT Team": ["VP of IT", "IT Manager", "Network Administrator", "System Administrator", "Database Administrator", "Software Engineer", "Developer"],
+    "Logistics Team": ["Logistics Manager", "Warehouse Supervisor", "Inventory Specialist", "Forklift Operator", "Shipping and Receiving Clerk"]
+}
+
 # Diccionario para soporte bilingüe con especificaciones
 translations = {
     "es": {
@@ -42,7 +49,7 @@ translations = {
         "search_specifications": "Buscar especificaciones",
         "audit_inventory": "Auditar inventario",
         "select_action": "Selecciona una acción",
-        "select_technician": "Selecciona el técnico",
+        "select_technician": "Selecciona un rol/cargo",
         "register": "Registrar",
         "inventory_available": "Inventario disponible",
         "devices_of": "dispositivos de",
@@ -112,7 +119,7 @@ translations = {
         "search_specifications": "Search Specifications",
         "audit_inventory": "Audit Inventory",
         "select_action": "Select an action",
-        "select_technician": "Select a technician",
+        "select_technician": "Select a role/position",
         "register": "Register",
         "inventory_available": "Inventory available",
         "devices_of": "devices of",
@@ -155,8 +162,8 @@ translations = {
         "email": "Email",
         "save_settings": "Save Settings",
         "settings_saved": "Notification settings saved",
-        "dashboard": "Dashboard Reports",
-        "predict_inventory": "Inventory Predictive Analysis",
+        "dashboard": "Reports Dashboard",
+        "predict_inventory": "Predictive Inventory Analysis",
         "project_management": "Project Management",
         "real_time_geolocation": "Real-Time Geolocation",
         "task_description": "Task Description",
@@ -437,22 +444,23 @@ def track_work_hours(lang):
     t = translations[lang]
     st.header(t['work_hours_tracking'])
     
-    user = st.selectbox(t['select_technician'], [user['name'] for user in users])
+    role_category = st.selectbox(t['select_action'], list(roles.keys()))
+    role = st.selectbox(t['select_technician'], roles[role_category])
     action = st.selectbox(t['select_action'], t['work_actions'])
     city = st.selectbox(t['location'], us_cities)
     location = get_city_location(city)
     
     if st.button(t['register']):
-        selected_user = next((u for u in users if u['name'] == user), None)
+        selected_user = next((u for u in users if u['name'] == role), None)
         if selected_user:
             timestamp = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
             selected_user['working_hours'].append({'action': action, 'timestamp': timestamp, 'location': location})
-            st.write(f'{action} {t["registered_for"]} {user} a las {timestamp}')
+            st.write(f'{action} {t["registered_for"]} {role} a las {timestamp}')
             st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
             st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
             
             if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
-                st.write(f'{t["sent_email_with_timesheet"]} {user}')
+                st.write(f'{t["sent_email_with_timesheet"]} {role}')
                 st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
 option = st.sidebar.selectbox(
