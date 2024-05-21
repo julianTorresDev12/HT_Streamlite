@@ -144,6 +144,7 @@ def track_inventory(lang):
                 if inventory['brand'] == brand and inventory['warehouse'] == warehouse:
                     inventory['quantity'] -= quantity
                     st.write(f'{quantity} {t["devices_of"]} {brand} {t["marked_for"]} {warehouse}')
+                    break  # Ensure it only happens once
     
     elif action == t['reserve_products']:
         brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
@@ -155,6 +156,7 @@ def track_inventory(lang):
                 if inventory['brand'] == brand:
                     inventory['quantity'] -= quantity
                     st.write(f'{quantity} {t["devices_of"]} {brand} {t["reserved_for_project"]} {project}')
+                    break  # Ensure it only happens once
     
     elif action == t['search_specifications']:
         brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
@@ -221,4 +223,3 @@ elif option == t['work_hours_tracking']:
     track_work_hours(lang)
 
 st.title(t['title'])
-
