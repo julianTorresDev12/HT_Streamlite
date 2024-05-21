@@ -4,6 +4,8 @@ import pytz
 import holidays
 import requests
 import random
+import matplotlib.pyplot as plt
+import pandas as pd
 
 # Generar datos de inventario simulados
 brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE']
@@ -46,7 +48,9 @@ translations = {
         "options": "Opciones",
         "select_language": "Selecciona un idioma",
         "spanish": "Español",
-        "english": "Inglés"
+        "english": "Inglés",
+        "select_warehouse": "Selecciona la bodega",
+        "no_data_available": "No hay datos disponibles"
     },
     "en": {
         "title": "Hootsi Application",
@@ -76,7 +80,9 @@ translations = {
         "options": "Options",
         "select_language": "Select a language",
         "spanish": "Spanish",
-        "english": "English"
+        "english": "English",
+        "select_warehouse": "Select the warehouse",
+        "no_data_available": "No data available"
     }
 }
 
@@ -157,12 +163,23 @@ def track_inventory(lang):
             st.write(f'{t["specifications_for"]} {brand}: (Detalles ficticios)')
     
     elif action == t['audit_inventory']:
-        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5'])
+        warehouse = st.selectbox(t['select_warehouse'], ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5'])
         
-        if st.button(t['register']):
-            for inventory in inventories:
-                if inventory['warehouse'] == warehouse:
-                    st.write(f'{inventory["quantity"]} {t["devices_of"]} {inventory["brand"]} {t["inventory_in"]} {warehouse}')
+        filtered_inventories = [inv for inv in inventories if inv['warehouse'] == warehouse]
+
+        if not filtered_inventories:
+            st.write(t['no_data_available'])
+        else:
+            df = pd.DataFrame(filtered_inventories)
+            brand_counts = df.groupby('brand')['quantity'].sum()
+
+            fig, ax = plt.subplots()
+            brand_counts.plot(kind='bar', ax=ax)
+            ax.set_title(f"Inventory Audit for {warehouse}")
+            ax.set_xlabel("Brand")
+            ax.set_ylabel("Quantity")
+
+            st.pyplot(fig)
 
 # Función de seguimiento de horas trabajadas
 def track_work_hours(lang):
@@ -204,3 +221,4 @@ elif option == t['work_hours_tracking']:
     track_work_hours(lang)
 
 st.title(t['title'])
+
