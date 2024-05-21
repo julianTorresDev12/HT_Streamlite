@@ -8,3 +8,4 @@ holidays
 pytz
 requests
 PyYAML
+plotly
