@@ -5,19 +5,16 @@ import requests
 import random
 import matplotlib.pyplot as plt
 import pandas as pd
-from sklearn.linear_model import LinearRegression
+import plotly.express as px
 import numpy as np
+from sklearn.linear_model import LinearRegression
+from streamlit_option_menu import option_menu
 
 # Generar datos de inventario simulados
 brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE']
 warehouses = ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5']
 
 inventories = [{"id": i, "brand": random.choice(brands), "warehouse": random.choice(warehouses), "quantity": random.randint(50, 200)} for i in range(1, 201)]
-
-users = [
-    {"id": 1, "name": "TechnicianA", "warehouse_id": 1, "projects": [], "working_hours": []},
-    {"id": 2, "name": "TechnicianB", "warehouse_id": 2, "projects": [], "working_hours": []},
-]
 
 work_hours_records = []
 check_in_records = []
@@ -296,26 +293,30 @@ def dashboard(lang):
         if not check_in_df.empty:
             st.write("Check-In Records")
             st.table(check_in_df)
-            st.line_chart(check_in_df['time'])
+            fig1 = px.line(check_in_df, x='time', y='name', title='Check-In Times')
+            st.plotly_chart(fig1)
 
         if not clock_out_df.empty:
             st.write("Clock-Out Records")
             st.table(clock_out_df)
-            st.line_chart(clock_out_df['time'])
+            fig2 = px.line(clock_out_df, x='time', y='name', title='Clock-Out Times')
+            st.plotly_chart(fig2)
 
     # Gráficos de horas trabajadas
     if work_hours_records:
         st.subheader("Work Hours Records")
         work_hours_df = pd.DataFrame(work_hours_records)
         st.table(work_hours_df)
-        st.line_chart(work_hours_df['timestamp'])
+        fig3 = px.line(work_hours_df, x='timestamp', y='name', title='Work Hours Tracking')
+        st.plotly_chart(fig3)
 
     # Gráficos de gestión de proyectos
     if project_management_records:
         st.subheader("Project Management Records")
         project_management_df = pd.DataFrame(project_management_records)
         st.table(project_management_df)
-        st.line_chart(project_management_df['due_date'])
+        fig4 = px.line(project_management_df, x='due_date', y='project_name', title='Project Management Tracking')
+        st.plotly_chart(fig4)
 
     # Ejemplo de gráficos de inventario
     st.subheader("Inventory Records")
@@ -323,24 +324,11 @@ def dashboard(lang):
     brand_counts = df.groupby('brand')['quantity'].sum()
     warehouse_counts = df.groupby('warehouse')['quantity'].sum()
 
-    fig1, ax1 = plt.subplots()
-    brand_counts.plot(kind='bar', ax=ax1)
-    ax1.set_title(t['inventory_by_brand'])
-    ax1.set_xlabel(t['select_brand'])
-    ax1.set_ylabel("Quantity")
+    fig5 = px.bar(brand_counts, x=brand_counts.index, y='quantity', title=t['inventory_by_brand'])
+    fig6 = px.bar(warehouse_counts, x=warehouse_counts.index, y='quantity', title=t['inventory_by_warehouse'])
 
-    fig2, ax2 = plt.subplots()
-    warehouse_counts.plot(kind='bar', ax=ax2)
-    ax2.set_title(t['inventory_by_warehouse'])
-    ax2.set_xlabel(t['select_warehouse'])
-    ax2.set_ylabel("Quantity")
-
-    st.pyplot(fig1)
-    st.pyplot(fig2)
-
-    # Ejemplo de tabla dinámica de horas trabajadas
-    df_hours = pd.DataFrame(users)
-    st.table(df_hours)
+    st.plotly_chart(fig5)
+    st.plotly_chart(fig6)
 
 # Función de análisis predictivo
 def predict_inventory(lang):
@@ -369,7 +357,8 @@ def predict_inventory(lang):
         predicted_quantities = model.predict(future_days)
 
         st.write(t['predictions_for_inventory'])
-        st.line_chart(predicted_quantities)
+        fig = px.line(x=future_days.flatten(), y=predicted_quantities, title="Inventory Prediction")
+        st.plotly_chart(fig)
 
 # Función de gestión de proyectos
 def project_management(lang):
@@ -414,20 +403,11 @@ def track_inventory(lang):
             brand_counts = df.groupby('brand')['quantity'].sum()
             warehouse_counts = df.groupby('warehouse')['quantity'].sum()
 
-            fig1, ax1 = plt.subplots()
-            brand_counts.plot(kind='bar', ax=ax1)
-            ax1.set_title(t['inventory_by_brand'])
-            ax1.set_xlabel(t['select_brand'])
-            ax1.set_ylabel("Quantity")
+            fig1 = px.bar(brand_counts, x=brand_counts.index, y='quantity', title=t['inventory_by_brand'])
+            fig2 = px.bar(warehouse_counts, x=warehouse_counts.index, y='quantity', title=t['inventory_by_warehouse'])
 
-            fig2, ax2 = plt.subplots()
-            warehouse_counts.plot(kind='bar', ax=ax2)
-            ax2.set_title(t['inventory_by_warehouse'])
-            ax2.set_xlabel(t['select_warehouse'])
-            ax2.set_ylabel("Quantity")
-
-            st.pyplot(fig1)
-            st.pyplot(fig2)
+            st.plotly_chart(fig1)
+            st.plotly_chart(fig2)
 
     elif action == t['mark_items']:
         brand = st.selectbox(t['select_brand'], brands)
@@ -470,13 +450,8 @@ def track_inventory(lang):
             df = pd.DataFrame(filtered_inventories)
             brand_counts = df.groupby('brand')['quantity'].sum()
 
-            fig, ax = plt.subplots()
-            brand_counts.plot(kind='bar', ax=ax)
-            ax.set_title(f"{t['inventory_by_warehouse']} {warehouse}")
-            ax.set_xlabel("Brand")
-            ax.set_ylabel("Quantity")
-
-            st.pyplot(fig)
+            fig = px.bar(brand_counts, x=brand_counts.index, y='quantity', title=f"{t['inventory_by_warehouse']} {warehouse}")
+            st.plotly_chart(fig)
 
 # Función de seguimiento de horas trabajadas
 def track_work_hours(lang):
@@ -501,9 +476,13 @@ def track_work_hours(lang):
             st.write(f'{t["sent_email_with_timesheet"]} {role}')
             st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
-option = st.sidebar.selectbox(
-    t['select_action'],
-    [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], t['predict_inventory'], t['project_management']]
+option = option_menu(
+    menu_title=t['select_action'],
+    options=[t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], t['predict_inventory'], t['project_management']],
+    icons=["check", "clock", "box", "clock", "bell", "bar-chart", "chart-line", "project-diagram"],
+    menu_icon="cast",
+    default_index=0,
+    orientation="horizontal",
 )
 
 if option == t['check_in_notification']:
