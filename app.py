@@ -1,7 +1,6 @@
 import streamlit as st
 import datetime as dt
 import pytz
-import holidays
 import requests
 import random
 import matplotlib.pyplot as plt
@@ -80,7 +79,7 @@ translations = {
         "location": "Ubicación",
         "submit": "Enviar",
         "check_in_time": "Hora de check-in",
-        "clock_out_time": "Hora de clock-out",
+        "clock_out_time": "Hora de check-out",
         "total_hours_worked": "Total de horas trabajadas",
         "brand_specifications": {
             "BrandA": "BrandA es conocida por su durabilidad y eficiencia. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
@@ -523,4 +522,3 @@ elif option == t['predict_inventory']:
     predict_inventory(lang)
 elif option == t['project_management']:
     project_management(lang)
-
