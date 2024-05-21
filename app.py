@@ -86,6 +86,14 @@ translations = {
     }
 }
 
+# Opciones de la interfaz
+st.sidebar.title("Options")
+lang = st.sidebar.selectbox("Select a language", ["es", "en"])
+
+t = translations[lang]
+
+st.title(t['title'])  # Aseguramos que el título esté siempre en la parte superior
+
 # Definir las funciones de notificación
 def notificate_check_in(lang):
     email_service = "model_postmark"  # Placeholder
@@ -133,6 +141,26 @@ def track_inventory(lang):
         st.write(t['inventory_available'])
         for inventory in inventories:
             st.write(f"{inventory['quantity']} {t['devices_of']} {inventory['brand']} {t['inventory_in']} {inventory['warehouse']}")
+        
+        # Graficar inventario por marca
+        df = pd.DataFrame(inventories)
+        brand_counts = df.groupby('brand')['quantity'].sum()
+        warehouse_counts = df.groupby('warehouse')['quantity'].sum()
+
+        fig1, ax1 = plt.subplots()
+        brand_counts.plot(kind='bar', ax=ax1)
+        ax1.set_title("Inventory by Brand")
+        ax1.set_xlabel("Brand")
+        ax1.set_ylabel("Quantity")
+
+        fig2, ax2 = plt.subplots()
+        warehouse_counts.plot(kind='bar', ax=ax2)
+        ax2.set_title("Inventory by Warehouse")
+        ax2.set_xlabel("Warehouse")
+        ax2.set_ylabel("Quantity")
+
+        st.pyplot(fig1)
+        st.pyplot(fig2)
     
     elif action == t['mark_items']:
         brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
@@ -202,12 +230,6 @@ def track_work_hours(lang):
                 st.write(f'{t["sent_email_with_timesheet"]} {user}')
                 st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
-# Opciones de la interfaz
-st.sidebar.title("Options")
-lang = st.sidebar.selectbox("Select a language", ["es", "en"])
-
-t = translations[lang]
-
 option = st.sidebar.selectbox(
     t['select_action'],
     [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking']]
@@ -222,4 +244,3 @@ elif option == t['inventory_tracking']:
 elif option == t['work_hours_tracking']:
     track_work_hours(lang)
 
-st.title(t['title'])
