@@ -85,7 +85,7 @@ def notificate_check_in(lang):
     us_holidays = holidays.US()
     today_date = dt.datetime.now(tz=pytz.timezone('UTC'))
 
-    users = [{"id": 315, "project_id": None, "time_zone": "America/New_York", "is_clocked_in": 0, "email": "user@example.com", "first_name": "User", "warehouse_id": 1, "tenant_id": 1}]
+    users = [{"id": 315, "project_id": None, "time_zone": "America/New_York", "is_clocked_in": 0, "email": "julian.torres@ahtglobal.com", "first_name": "User", "warehouse_id": 1, "tenant_id": 1}]
 
     if today_date not in us_holidays:
         for user in users:
@@ -103,7 +103,7 @@ def notificate_clock_out(lang):
     us_holidays = holidays.US()
     today_date = dt.datetime.now(tz=pytz.timezone('UTC'))
 
-    users = [{"id": 315, "is_clocked_in": 1, "time_zone": "America/New_York", "email": "user@example.com", "first_name": "User", "warehouse_id": 1, "tenant_id": 1}]
+    users = [{"id": 315, "is_clocked_in": 1, "time_zone": "America/New_York", "email": "julian.torres@ahtglobal.com", "first_name": "User", "warehouse_id": 1, "tenant_id": 1}]
 
     if today_date not in us_holidays:
         for user in users:
@@ -180,7 +180,7 @@ def track_work_hours(lang):
             
             if action == 'Fin de jornada':
                 st.write(f'{t["sent_email_with_timesheet"]} {user}')
-                st.write(f'{t["email_sent_to"]}: admin@hootsi.com')
+                st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
 # Opciones de la interfaz
 st.sidebar.title("Options")
