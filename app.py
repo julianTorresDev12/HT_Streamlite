@@ -264,23 +264,29 @@ def predict_inventory(lang):
     t = translations[lang]
     st.header(t['predict_inventory'])
 
-    # Datos simulados para el análisis predictivo
-    historical_data = {
-        "day": np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
-        "quantity": np.array([100, 90, 80, 70, 60, 50, 40, 30, 20, 10])
-    }
+    selected_brand = st.selectbox(t['select_brand'], brands)
+    selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
+    prediction_days = st.selectbox("Select prediction period (days)", [30, 60, 90, 120])
 
-    X = historical_data["day"].reshape(-1, 1)
-    y = historical_data["quantity"]
+    # Filtrar datos históricos por marca y bodega
+    historical_data = [inv for inv in inventories if inv['brand'] == selected_brand and inv['warehouse'] == selected_warehouse]
 
-    model = LinearRegression()
-    model.fit(X, y)
+    if not historical_data:
+        st.write(t['no_data_available'])
+    else:
+        df = pd.DataFrame(historical_data)
+        df['day'] = range(1, len(df) + 1)  # Asumimos un día por cada registro
+        X = df['day'].values.reshape(-1, 1)
+        y = df['quantity'].values
 
-    future_days = np.array([11, 12, 13, 14, 15]).reshape(-1, 1)
-    predicted_quantities = model.predict(future_days)
+        model = LinearRegression()
+        model.fit(X, y)
 
-    st.write(t['predictions_for_inventory'])
-    st.write(predicted_quantities)
+        future_days = np.array(range(len(df) + 1, len(df) + 1 + prediction_days)).reshape(-1, 1)
+        predicted_quantities = model.predict(future_days)
+
+        st.write(t['predictions_for_inventory'])
+        st.line_chart(predicted_quantities)
 
 # Función de gestión de proyectos
 def project_management(lang):
