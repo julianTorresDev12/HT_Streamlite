@@ -1,8 +1,9 @@
 streamlit
-holidays
-requests
-pytz
+streamlit-authenticator
+bcrypt
 matplotlib
 pandas
 scikit-learn
+holidays
+pytz
 requests
