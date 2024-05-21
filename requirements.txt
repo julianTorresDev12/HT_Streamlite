@@ -1,11 +1,9 @@
 streamlit
-streamlit-authenticator
-bcrypt
 matplotlib
 pandas
 scikit-learn
-holidays
 pytz
 requests
-PyYAML
+numpy
 plotly
+streamlit-option-menu
