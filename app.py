@@ -184,13 +184,13 @@ translations = {
     }
 }
 
-# Opciones de la interfaz
-st.title(t['title'])
-
-st.markdown("<h2 style='text-align: center;'>Options</h2>", unsafe_allow_html=True)
-lang = st.selectbox("Select a language", ["es", "en"])
+# Selección de idioma
+st.markdown("<h1 style='text-align: center;'>Options</h1>", unsafe_allow_html=True)
+lang = st.selectbox("", ["es", "en"], index=0)
 
 t = translations[lang]
+
+st.title(t['title'])  # Aseguramos que el título esté siempre en la parte superior
 
 # Variables globales para almacenar horas de check-in y check-out
 check_in_times = {}
@@ -490,17 +490,22 @@ def track_work_hours():
             st.write(f'{t["sent_email_with_timesheet"]} {role}')
             st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
-# Menú principal
+# Opciones de la interfaz
 option = option_menu(
-    menu_title="",  # No se muestra el título en el menú
+    menu_title=None,
     options=[
-        t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], 
-        t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], 
-        t['predict_inventory'], t['project_management']
+        t['check_in_notification'], 
+        t['clock_out_notification'], 
+        t['inventory_tracking'], 
+        t['work_hours_tracking'], 
+        t['configure_notifications'], 
+        t['dashboard'], 
+        t['predict_inventory'], 
+        t['project_management']
     ],
-    icons=['check-square', 'clock', 'boxes', 'calendar', 'bell', 'bar-chart', 'line-chart', 'clipboard'],
-    menu_icon="cast",  # Icono del menú
-    default_index=0, 
+    icons=["box-arrow-in-right", "box-arrow-left", "list-task", "clock", "gear", "bar-chart", "graph-up", "clipboard"],
+    menu_icon="cast",
+    default_index=0,
     orientation="horizontal"
 )
 
