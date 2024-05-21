@@ -1,18 +1,16 @@
 credentials:
-  usernames:
-    user1:
-      name: John Doe
-      password: $2b$12$KIX8F3J.GGt3g21K2J7TSuT9m.zfWCEiAYYk.vY9iBFO8uZ/1m1K2 # 'password'
-    user2:
-      name: Jane Doe
-      password: $2b$12$KIX8F3J.GGt3g21K2J7TSuT9m.zfWCEiAYYk.vY9iBFO8uZ/1m1K2 # 'password'
+  users:
+    - name: "John Doe"
+      username: "johndoe"
+      password: "password"
+    - name: "Jane Smith"
+      username: "janesmith"
+      password: "password"
 
 cookie:
+  name: "my_cookie"
+  key: "my_cookie_key"
   expiry_days: 30
-  name: some_cookie_name
-  key: some_cookie_key
 
 preauthorized:
-  emails:
-  - john.doe@example.com
-  - jane.doe@example.com
+  emails: []
