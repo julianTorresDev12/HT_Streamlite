@@ -15,10 +15,72 @@ users = [
     {"id": 2, "name": "TechnicianB", "warehouse_id": 2, "projects": [], "working_hours": []},
 ]
 
-st.title('Hootsi Application')
+# Diccionario para soporte bilingüe
+translations = {
+    "es": {
+        "title": "Aplicación Hootsi",
+        "check_in_notification": "Notificación de Check-In",
+        "clock_out_notification": "Notificación de Clock-Out",
+        "inventory_tracking": "Seguimiento de Inventario",
+        "work_hours_tracking": "Seguimiento de Horas Trabajadas",
+        "view_inventory": "Ver inventario",
+        "mark_items": "Marcar elementos",
+        "reserve_products": "Reservar productos",
+        "search_specifications": "Buscar especificaciones",
+        "audit_inventory": "Auditar inventario",
+        "select_action": "Selecciona una acción",
+        "select_technician": "Selecciona el técnico",
+        "register": "Registrar",
+        "inventory_available": "Inventario disponible",
+        "devices_of": "dispositivos de",
+        "marked_for": "marcados para",
+        "reserved_for_project": "reservados para el proyecto",
+        "specifications_for": "Especificaciones para",
+        "inventory_in": "dispositivos en",
+        "hours_tracking": "Seguimiento de Horas Trabajadas",
+        "action": "acción",
+        "registered_for": "registrado para",
+        "sent_email_with_timesheet": "Se ha enviado un correo con la hoja de tiempos de",
+        "email_sent_to": "Correo enviado a",
+        "options": "Opciones",
+        "select_language": "Selecciona un idioma",
+        "spanish": "Español",
+        "english": "Inglés"
+    },
+    "en": {
+        "title": "Hootsi Application",
+        "check_in_notification": "Check-In Notification",
+        "clock_out_notification": "Clock-Out Notification",
+        "inventory_tracking": "Inventory Tracking",
+        "work_hours_tracking": "Work Hours Tracking",
+        "view_inventory": "View Inventory",
+        "mark_items": "Mark Items",
+        "reserve_products": "Reserve Products",
+        "search_specifications": "Search Specifications",
+        "audit_inventory": "Audit Inventory",
+        "select_action": "Select an action",
+        "select_technician": "Select a technician",
+        "register": "Register",
+        "inventory_available": "Inventory available",
+        "devices_of": "devices of",
+        "marked_for": "marked for",
+        "reserved_for_project": "reserved for the project",
+        "specifications_for": "Specifications for",
+        "inventory_in": "devices in",
+        "hours_tracking": "Work Hours Tracking",
+        "action": "action",
+        "registered_for": "registered for",
+        "sent_email_with_timesheet": "An email with the timesheet has been sent for",
+        "email_sent_to": "Email sent to",
+        "options": "Options",
+        "select_language": "Select a language",
+        "spanish": "Spanish",
+        "english": "English"
+    }
+}
 
 # Definir las funciones de notificación
-def notificate_check_in():
+def notificate_check_in(lang):
     email_service = "model_postmark"  # Placeholder
     us_holidays = holidays.US()
     today_date = dt.datetime.now(tz=pytz.timezone('UTC'))
@@ -36,7 +98,7 @@ def notificate_check_in():
                     st.write(f"Sending reminder email to: {user['email']}")
                     st.write("Hootsi would like to remind you to clock in and then check in for your project today.")
 
-def notificate_clock_out():
+def notificate_clock_out(lang):
     email_service = "model_postmark"  # Placeholder
     us_holidays = holidays.US()
     today_date = dt.datetime.now(tz=pytz.timezone('UTC'))
@@ -54,84 +116,90 @@ def notificate_clock_out():
                     st.write("Hootsi would like to remind you to clock out for the day.")
 
 # Función de seguimiento de inventario
-def track_inventory():
-    st.header('Herramienta de Seguimiento de Inventario')
+def track_inventory(lang):
+    t = translations[lang]
+    st.header(t['inventory_tracking'])
     
-    action = st.selectbox('Selecciona una acción', ['Ver inventario', 'Marcar elementos', 'Reservar productos', 'Buscar especificaciones', 'Auditar inventario'])
+    action = st.selectbox(t['select_action'], [t['view_inventory'], t['mark_items'], t['reserve_products'], t['search_specifications'], t['audit_inventory']])
     
-    if action == 'Ver inventario':
-        st.write('Inventario disponible:')
+    if action == t['view_inventory']:
+        st.write(t['inventory_available'])
         for inventory in inventories:
-            st.write(f"{inventory['quantity']} dispositivos de {inventory['brand']} en {inventory['warehouse']}")
+            st.write(f"{inventory['quantity']} {t['devices_of']} {inventory['brand']} {t['inventory_in']} {inventory['warehouse']}")
     
-    elif action == 'Marcar elementos':
-        brand = st.selectbox('Selecciona la marca', ['BrandA', 'BrandB'])
-        quantity = st.number_input('Cantidad de dispositivos a marcar', min_value=0)
-        warehouse = st.selectbox('Selecciona la bodega de destino', ['Warehouse1', 'Warehouse2'])
+    elif action == t['mark_items']:
+        brand = st.selectbox('Select brand', ['BrandA', 'BrandB'])
+        quantity = st.number_input('Quantity to mark', min_value=0)
+        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2'])
         
-        if st.button('Marcar'):
+        if st.button(t['register']):
             for inventory in inventories:
                 if inventory['brand'] == brand and inventory['warehouse'] == warehouse:
                     inventory['quantity'] -= quantity
-                    st.write(f'{quantity} dispositivos de {brand} marcados para {warehouse}')
+                    st.write(f'{quantity} {t["devices_of"]} {brand} {t["marked_for"]} {warehouse}')
     
-    elif action == 'Reservar productos':
-        brand = st.selectbox('Selecciona la marca', ['BrandA', 'BrandB'])
-        quantity = st.number_input('Cantidad de dispositivos a reservar', min_value=0)
-        project = st.text_input('Nombre del proyecto de automatización')
+    elif action == t['reserve_products']:
+        brand = st.selectbox('Select brand', ['BrandA', 'BrandB'])
+        quantity = st.number_input('Quantity to reserve', min_value=0)
+        project = st.text_input('Project name')
         
-        if st.button('Reservar'):
+        if st.button(t['register']):
             for inventory in inventories:
                 if inventory['brand'] == brand:
                     inventory['quantity'] -= quantity
-                    st.write(f'{quantity} dispositivos de {brand} reservados para el proyecto {project}')
+                    st.write(f'{quantity} {t["devices_of"]} {brand} {t["reserved_for_project"]} {project}')
     
-    elif action == 'Buscar especificaciones':
-        brand = st.selectbox('Selecciona la marca', ['BrandA', 'BrandB'])
+    elif action == t['search_specifications']:
+        brand = st.selectbox('Select brand', ['BrandA', 'BrandB'])
         
-        if st.button('Buscar'):
-            st.write(f'Especificaciones para {brand}: (Detalles ficticios)')
+        if st.button(t['register']):
+            st.write(f'{t["specifications_for"]} {brand}: (Detalles ficticios)')
     
-    elif action == 'Auditar inventario':
-        warehouse = st.selectbox('Selecciona la bodega para auditar', ['Warehouse1', 'Warehouse2'])
+    elif action == t['audit_inventory']:
+        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2'])
         
-        if st.button('Auditar'):
+        if st.button(t['register']):
             for inventory in inventories:
                 if inventory['warehouse'] == warehouse:
-                    st.write(f'{inventory["quantity"]} dispositivos de {inventory["brand"]} en {warehouse}')
+                    st.write(f'{inventory["quantity"]} {t["devices_of"]} {inventory["brand"]} {t["inventory_in"]} {warehouse}')
 
 # Función de seguimiento de horas trabajadas
-def track_work_hours():
-    st.header('Seguimiento de Horas Trabajadas')
+def track_work_hours(lang):
+    t = translations[lang]
+    st.header(t['work_hours_tracking'])
     
-    user = st.selectbox('Selecciona el técnico', [user['name'] for user in users])
-    action = st.selectbox('Selecciona una acción', ['Inicio de jornada', 'Llegada a proyecto', 'Toma de descansos', 'Salida de proyecto', 'Fin de jornada'])
+    user = st.selectbox(t['select_technician'], [user['name'] for user in users])
+    action = st.selectbox(t['select_action'], ['Inicio de jornada', 'Llegada a proyecto', 'Toma de descansos', 'Salida de proyecto', 'Fin de jornada'])
     
-    if st.button('Registrar'):
+    if st.button(t['register']):
         selected_user = next((u for u in users if u['name'] == user), None)
         if selected_user:
             timestamp = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
             selected_user['working_hours'].append({'action': action, 'timestamp': timestamp})
-            st.write(f'{action} registrado para {user} a las {timestamp}')
+            st.write(f'{action} {t["registered_for"]} {user} a las {timestamp}')
             
             if action == 'Fin de jornada':
-                st.write(f'Se ha enviado un correo con la hoja de tiempos de {user}')
-                # Simulación de envío de correo
-                st.write(f'Correo enviado a: admin@hootsi.com')
+                st.write(f'{t["sent_email_with_timesheet"]} {user}')
+                st.write(f'{t["email_sent_to"]}: admin@hootsi.com')
 
 # Opciones de la interfaz
 st.sidebar.title("Options")
+lang = st.sidebar.selectbox("Select a language", ["es", "en"])
+
+t = translations[lang]
+
 option = st.sidebar.selectbox(
-    'Select an action:',
-    ('Check-In Notification', 'Clock-Out Notification', 'Seguimiento de Inventario', 'Seguimiento de Horas Trabajadas')
+    t['select_action'],
+    [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking']]
 )
 
-if option == 'Check-In Notification':
-    notificate_check_in()
-elif option == 'Clock-Out Notification':
-    notificate_clock_out()
-elif option == 'Seguimiento de Inventario':
-    track_inventory()
-elif option == 'Seguimiento de Horas Trabajadas':
-    track_work_hours()
+if option == t['check_in_notification']:
+    notificate_check_in(lang)
+elif option == t['clock_out_notification']:
+    notificate_clock_out(lang)
+elif option == t['inventory_tracking']:
+    track_inventory(lang)
+elif option == t['work_hours_tracking']:
+    track_work_hours(lang)
 
+st.title(t['title'])
