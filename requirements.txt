@@ -2,3 +2,5 @@ streamlit
 holidays
 requests
 pytz
+matplotlib
+pandas
