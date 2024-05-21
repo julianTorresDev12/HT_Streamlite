@@ -340,7 +340,8 @@ def project_management(lang):
     st.header(t['project_management'])
 
     project_name = st.text_input(t['name'])
-    technician = st.selectbox(t['select_technician'], [user['name'] for user in users])
+    role_category = st.selectbox(t['select_action'], list(roles.keys()))
+    role = st.selectbox(t['select_technician'], roles[role_category])
     task_description = st.text_area(t['task_description'])
     due_date = st.date_input(t['due_date'])
 
@@ -446,6 +447,7 @@ def track_work_hours(lang):
     
     role_category = st.selectbox(t['select_action'], list(roles.keys()))
     role = st.selectbox(t['select_technician'], roles[role_category])
+    name = st.text_input(t['name'])
     action = st.selectbox(t['select_action'], t['work_actions'])
     city = st.selectbox(t['location'], us_cities)
     location = get_city_location(city)
