@@ -18,7 +18,7 @@ users = [
     {"id": 2, "name": "TechnicianB", "warehouse_id": 2, "projects": [], "working_hours": []},
 ]
 
-# Diccionario para soporte bilingüe
+# Diccionario para soporte bilingüe con especificaciones
 translations = {
     "es": {
         "title": "Aplicación Hootsi",
@@ -59,7 +59,14 @@ translations = {
         "submit": "Enviar",
         "check_in_time": "Hora de check-in",
         "clock_out_time": "Hora de clock-out",
-        "total_hours_worked": "Total de horas trabajadas"
+        "total_hours_worked": "Total de horas trabajadas",
+        "brand_specifications": {
+            "BrandA": "BrandA es conocida por su durabilidad y eficiencia. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "BrandB": "BrandB ofrece una excelente relación calidad-precio. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandC": "BrandC es famosa por su diseño elegante. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "BrandD": "BrandD tiene productos de alta gama. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
+            "BrandE": "BrandE es conocida por su accesibilidad. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium."
+        }
     },
     "en": {
         "title": "Hootsi Application",
@@ -100,7 +107,14 @@ translations = {
         "submit": "Submit",
         "check_in_time": "Check-in time",
         "clock_out_time": "Clock-out time",
-        "total_hours_worked": "Total hours worked"
+        "total_hours_worked": "Total hours worked",
+        "brand_specifications": {
+            "BrandA": "BrandA is known for its durability and efficiency. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "BrandB": "BrandB offers excellent value for money. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandC": "BrandC is famous for its sleek design. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "BrandD": "BrandD has high-end products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
+            "BrandE": "BrandE is known for its accessibility. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor."
+        }
     }
 }
 
@@ -227,7 +241,7 @@ def track_inventory(lang):
         brand = st.selectbox(t['select_brand'], brands)
         
         if st.button(t['register']):
-            st.write(f'{t["specifications_for"]} {brand}: (Detalles ficticios)')
+            st.write(f'{t["specifications_for"]} {brand}: {t["brand_specifications"][brand]}')
     
     elif action == t['audit_inventory']:
         warehouse = st.selectbox(t['select_warehouse'], warehouses)
