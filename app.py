@@ -20,6 +20,11 @@ users = [
     {"id": 2, "name": "TechnicianB", "warehouse_id": 2, "projects": [], "working_hours": []},
 ]
 
+work_hours_records = []
+check_in_records = []
+clock_out_records = []
+project_management_records = []
+
 # 20 ciudades más importantes de EE.UU.
 us_cities = [
     "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
@@ -232,6 +237,7 @@ def notificate_check_in(lang):
     if st.button(t['submit']):
         check_in_time = dt.datetime.now(tz=pytz.timezone('UTC'))
         check_in_times[name] = check_in_time
+        check_in_records.append({"name": name, "role": role, "activity": activity, "city": city, "location": location, "time": check_in_time})
         st.write(f"{t['name']}: {name}")
         st.write(f"{t['role']}: {role}")
         st.write(f"{t['activity']}: {activity}")
@@ -252,6 +258,7 @@ def notificate_clock_out(lang):
     if st.button(t['submit']):
         check_out_time = dt.datetime.now(tz=pytz.timezone('UTC'))
         check_out_times[name] = check_out_time
+        clock_out_records.append({"name": name, "role": role, "activity": activity, "city": city, "location": location, "time": check_out_time})
         st.write(f"{t['name']}: {name}")
         st.write(f"{t['role']}: {role}")
         st.write(f"{t['activity']}: {activity}")
@@ -281,7 +288,38 @@ def dashboard(lang):
     t = translations[lang]
     st.header(t['dashboard'])
 
+    # Gráficos de Check-In y Clock-Out
+    if check_in_records or clock_out_records:
+        st.subheader("Check-In and Clock-Out Records")
+        check_in_df = pd.DataFrame(check_in_records)
+        clock_out_df = pd.DataFrame(clock_out_records)
+        
+        if not check_in_df.empty:
+            st.write("Check-In Records")
+            st.table(check_in_df)
+            st.line_chart(check_in_df['time'])
+        
+        if not clock_out_df.empty:
+            st.write("Clock-Out Records")
+            st.table(clock_out_df)
+            st.line_chart(clock_out_df['time'])
+
+    # Gráficos de horas trabajadas
+    if work_hours_records:
+        st.subheader("Work Hours Records")
+        work_hours_df = pd.DataFrame(work_hours_records)
+        st.table(work_hours_df)
+        st.line_chart(work_hours_df['timestamp'])
+
+    # Gráficos de gestión de proyectos
+    if project_management_records:
+        st.subheader("Project Management Records")
+        project_management_df = pd.DataFrame(project_management_records)
+        st.table(project_management_df)
+        st.line_chart(project_management_df['due_date'])
+
     # Ejemplo de gráficos de inventario
+    st.subheader("Inventory Records")
     df = pd.DataFrame(inventories)
     brand_counts = df.groupby('brand')['quantity'].sum()
     warehouse_counts = df.groupby('warehouse')['quantity'].sum()
@@ -346,6 +384,7 @@ def project_management(lang):
     due_date = st.date_input(t['due_date'])
 
     if st.button(t['assign_task']):
+        project_management_records.append({"project_name": project_name, "role": role, "task_description": task_description, "due_date": due_date})
         st.success(t['task_assigned'])
         # Aquí se guardaría la tarea en una base de datos o archivo
 
@@ -447,23 +486,20 @@ def track_work_hours(lang):
     
     role_category = st.selectbox(t['select_action'], list(roles.keys()))
     role = st.selectbox(t['select_technician'], roles[role_category])
-    name = st.text_input(t['name'])
     action = st.selectbox(t['select_action'], t['work_actions'])
     city = st.selectbox(t['location'], us_cities)
     location = get_city_location(city)
     
     if st.button(t['register']):
-        selected_user = next((u for u in users if u['name'] == role), None)
-        if selected_user:
-            timestamp = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
-            selected_user['working_hours'].append({'action': action, 'timestamp': timestamp, 'location': location})
-            st.write(f'{action} {t["registered_for"]} {role} a las {timestamp}')
-            st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
-            st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
+        timestamp = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
+        work_hours_records.append({"role": role, "action": action, "timestamp": timestamp, "city": city, "location": location})
+        st.write(f'{action} {t["registered_for"]} {role} a las {timestamp}')
+        st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
+        st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
             
-            if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
-                st.write(f'{t["sent_email_with_timesheet"]} {role}')
-                st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
+        if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
+            st.write(f'{t["sent_email_with_timesheet"]} {role}')
+            st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
 option = st.sidebar.selectbox(
     t['select_action'],
