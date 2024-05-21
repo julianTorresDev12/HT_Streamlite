@@ -7,3 +7,4 @@ scikit-learn
 holidays
 pytz
 requests
+PyYAML
