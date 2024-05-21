@@ -6,6 +6,8 @@ import requests
 import random
 import matplotlib.pyplot as plt
 import pandas as pd
+from sklearn.linear_model import LinearRegression
+import numpy as np
 
 # Generar datos de inventario simulados
 brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE']
@@ -67,7 +69,28 @@ translations = {
             "BrandD": "BrandD tiene productos de alta gama. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
             "BrandE": "BrandE es conocida por su accesibilidad. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium."
         },
-        "work_actions": ["Inicio de jornada", "Llegada a proyecto", "Toma de descansos", "Salida de proyecto", "Fin de jornada"]
+        "work_actions": ["Inicio de jornada", "Llegada a proyecto", "Toma de descansos", "Salida de proyecto", "Fin de jornada"],
+        "configure_notifications": "Configurar Notificaciones Personalizadas",
+        "inventory_below_threshold": "Inventario bajo el umbral",
+        "break_time_exceeded": "Tiempo de descanso excedido",
+        "threshold": "Umbral",
+        "email": "Correo Electrónico",
+        "save_settings": "Guardar Configuración",
+        "settings_saved": "Configuración de notificación guardada",
+        "dashboard": "Dashboard de Reportes",
+        "predict_inventory": "Análisis Predictivo de Inventario",
+        "project_management": "Gestión de Proyectos",
+        "real_time_geolocation": "Geolocalización en Tiempo Real",
+        "task_description": "Descripción de la Tarea",
+        "due_date": "Fecha de Vencimiento",
+        "assign_task": "Asignar Tarea",
+        "task_assigned": "Tarea asignada",
+        "predictions_for_inventory": "Predicciones de Inventario para los próximos días",
+        "location": "Ubicación",
+        "current_location": "Ubicación actual",
+        "inventory_by_brand": "Inventario por Marca",
+        "inventory_by_warehouse": "Inventario por Bodega",
+        "data_saved": "Datos guardados"
     },
     "en": {
         "title": "Hootsi Application",
@@ -116,7 +139,28 @@ translations = {
             "BrandD": "BrandD has high-end products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
             "BrandE": "BrandE is known for its accessibility. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor."
         },
-        "work_actions": ["Start of workday", "Arrival at project", "Break", "Leaving project", "End of workday"]
+        "work_actions": ["Start of workday", "Arrival at project", "Break", "Leaving project", "End of workday"],
+        "configure_notifications": "Configure Custom Notifications",
+        "inventory_below_threshold": "Inventory Below Threshold",
+        "break_time_exceeded": "Break Time Exceeded",
+        "threshold": "Threshold",
+        "email": "Email",
+        "save_settings": "Save Settings",
+        "settings_saved": "Notification settings saved",
+        "dashboard": "Dashboard Reports",
+        "predict_inventory": "Inventory Predictive Analysis",
+        "project_management": "Project Management",
+        "real_time_geolocation": "Real-Time Geolocation",
+        "task_description": "Task Description",
+        "due_date": "Due Date",
+        "assign_task": "Assign Task",
+        "task_assigned": "Task assigned",
+        "predictions_for_inventory": "Predictions for Inventory for the coming days",
+        "location": "Location",
+        "current_location": "Current Location",
+        "inventory_by_brand": "Inventory by Brand",
+        "inventory_by_warehouse": "Inventory by Warehouse",
+        "data_saved": "Data saved"
     }
 }
 
@@ -173,6 +217,95 @@ def notificate_clock_out(lang):
             total_hours = (check_out_time - check_in_times[name]).total_seconds() / 3600
             st.write(f"{t['total_hours_worked']}: {total_hours:.2f} horas")
 
+# Función de configuración de notificaciones personalizadas
+def configure_notifications(lang):
+    t = translations[lang]
+    st.header(t['configure_notifications'])
+
+    notification_type = st.selectbox(t['select_action'], [t['inventory_below_threshold'], t['break_time_exceeded']])
+    threshold = st.number_input(t['threshold'], min_value=0, value=10)
+    email = st.text_input(t['email'])
+
+    if st.button(t['save_settings']):
+        st.success(t['settings_saved'])
+        # Aquí se guardaría la configuración en una base de datos o archivo
+
+# Función de dashboard de reportes
+def dashboard(lang):
+    t = translations[lang]
+    st.header(t['dashboard'])
+
+    # Ejemplo de gráficos de inventario
+    df = pd.DataFrame(inventories)
+    brand_counts = df.groupby('brand')['quantity'].sum()
+    warehouse_counts = df.groupby('warehouse')['quantity'].sum()
+
+    fig1, ax1 = plt.subplots()
+    brand_counts.plot(kind='bar', ax=ax1)
+    ax1.set_title(t['inventory_by_brand'])
+    ax1.set_xlabel(t['select_brand'])
+    ax1.set_ylabel("Quantity")
+
+    fig2, ax2 = plt.subplots()
+    warehouse_counts.plot(kind='bar', ax=ax2)
+    ax2.set_title(t['inventory_by_warehouse'])
+    ax2.set_xlabel(t['select_warehouse'])
+    ax2.set_ylabel("Quantity")
+
+    st.pyplot(fig1)
+    st.pyplot(fig2)
+
+    # Ejemplo de tabla dinámica de horas trabajadas
+    df_hours = pd.DataFrame(users)
+    st.table(df_hours)
+
+# Función de análisis predictivo
+def predict_inventory(lang):
+    t = translations[lang]
+    st.header(t['predict_inventory'])
+
+    # Datos simulados para el análisis predictivo
+    historical_data = {
+        "day": np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]),
+        "quantity": np.array([100, 90, 80, 70, 60, 50, 40, 30, 20, 10])
+    }
+
+    X = historical_data["day"].reshape(-1, 1)
+    y = historical_data["quantity"]
+
+    model = LinearRegression()
+    model.fit(X, y)
+
+    future_days = np.array([11, 12, 13, 14, 15]).reshape(-1, 1)
+    predicted_quantities = model.predict(future_days)
+
+    st.write(t['predictions_for_inventory'])
+    st.write(predicted_quantities)
+
+# Función de gestión de proyectos
+def project_management(lang):
+    t = translations[lang]
+    st.header(t['project_management'])
+
+    project_name = st.text_input(t['name'])
+    technician = st.selectbox(t['select_technician'], [user['name'] for user in users])
+    task_description = st.text_area(t['task_description'])
+    due_date = st.date_input(t['due_date'])
+
+    if st.button(t['assign_task']):
+        st.success(t['task_assigned'])
+        # Aquí se guardaría la tarea en una base de datos o archivo
+
+# Función de geolocalización en tiempo real
+def real_time_geolocation(lang):
+    t = translations[lang]
+    st.header(t['real_time_geolocation'])
+
+    # Simulación de una ubicación actual (se podría integrar una API de geolocalización real)
+    location = {"latitude": 40.7128, "longitude": -74.0060}  # Coordenadas de ejemplo (Nueva York)
+    st.write(f"{t['current_location']}: ({location['latitude']}, {location['longitude']})")
+    st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
+
 # Función de seguimiento de inventario
 def track_inventory(lang):
     t = translations[lang]
@@ -202,14 +335,14 @@ def track_inventory(lang):
 
             fig1, ax1 = plt.subplots()
             brand_counts.plot(kind='bar', ax=ax1)
-            ax1.set_title("Inventory by Brand")
-            ax1.set_xlabel("Brand")
+            ax1.set_title(t['inventory_by_brand'])
+            ax1.set_xlabel(t['select_brand'])
             ax1.set_ylabel("Quantity")
 
             fig2, ax2 = plt.subplots()
             warehouse_counts.plot(kind='bar', ax=ax2)
-            ax2.set_title("Inventory by Warehouse")
-            ax2.set_xlabel("Warehouse")
+            ax2.set_title(t['inventory_by_warehouse'])
+            ax2.set_xlabel(t['select_warehouse'])
             ax2.set_ylabel("Quantity")
 
             st.pyplot(fig1)
@@ -258,7 +391,7 @@ def track_inventory(lang):
 
             fig, ax = plt.subplots()
             brand_counts.plot(kind='bar', ax=ax)
-            ax.set_title(f"Inventory Audit for {warehouse}")
+            ax.set_title(f"{t['inventory_by_warehouse']} {warehouse}")
             ax.set_xlabel("Brand")
             ax.set_ylabel("Quantity")
 
@@ -285,7 +418,7 @@ def track_work_hours(lang):
 
 option = st.sidebar.selectbox(
     t['select_action'],
-    [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking']]
+    [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], t['predict_inventory'], t['project_management'], t['real_time_geolocation']]
 )
 
 if option == t['check_in_notification']:
@@ -296,3 +429,13 @@ elif option == t['inventory_tracking']:
     track_inventory(lang)
 elif option == t['work_hours_tracking']:
     track_work_hours(lang)
+elif option == t['configure_notifications']:
+    configure_notifications(lang)
+elif option == t['dashboard']:
+    dashboard(lang)
+elif option == t['predict_inventory']:
+    predict_inventory(lang)
+elif option == t['project_management']:
+    project_management(lang)
+elif option == t['real_time_geolocation']:
+    real_time_geolocation(lang)
