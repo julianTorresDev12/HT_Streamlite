@@ -66,7 +66,8 @@ translations = {
             "BrandC": "BrandC es famosa por su diseño elegante. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
             "BrandD": "BrandD tiene productos de alta gama. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
             "BrandE": "BrandE es conocida por su accesibilidad. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium."
-        }
+        },
+        "work_actions": ["Inicio de jornada", "Llegada a proyecto", "Toma de descansos", "Salida de proyecto", "Fin de jornada"]
     },
     "en": {
         "title": "Hootsi Application",
@@ -114,7 +115,8 @@ translations = {
             "BrandC": "BrandC is famous for its sleek design. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
             "BrandD": "BrandD has high-end products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
             "BrandE": "BrandE is known for its accessibility. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor."
-        }
+        },
+        "work_actions": ["Start of workday", "Arrival at project", "Break", "Leaving project", "End of workday"]
     }
 }
 
@@ -268,7 +270,7 @@ def track_work_hours(lang):
     st.header(t['work_hours_tracking'])
     
     user = st.selectbox(t['select_technician'], [user['name'] for user in users])
-    action = st.selectbox(t['select_action'], ['Inicio de jornada', 'Llegada a proyecto', 'Toma de descansos', 'Salida de proyecto', 'Fin de jornada'])
+    action = st.selectbox(t['select_action'], t['work_actions'])
     
     if st.button(t['register']):
         selected_user = next((u for u in users if u['name'] == user), None)
@@ -277,7 +279,7 @@ def track_work_hours(lang):
             selected_user['working_hours'].append({'action': action, 'timestamp': timestamp})
             st.write(f'{action} {t["registered_for"]} {user} a las {timestamp}')
             
-            if action == 'Fin de jornada':
+            if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
                 st.write(f'{t["sent_email_with_timesheet"]} {user}')
                 st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
