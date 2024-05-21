@@ -20,6 +20,14 @@ users = [
     {"id": 2, "name": "TechnicianB", "warehouse_id": 2, "projects": [], "working_hours": []},
 ]
 
+# 20 ciudades más importantes de EE.UU.
+us_cities = [
+    "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
+    "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA",
+    "Austin, TX", "Jacksonville, FL", "Fort Worth, TX", "Columbus, OH", "Charlotte, NC",
+    "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Washington, DC"
+]
+
 # Diccionario para soporte bilingüe con especificaciones
 translations = {
     "es": {
@@ -176,6 +184,33 @@ st.title(t['title'])  # Aseguramos que el título esté siempre en la parte supe
 check_in_times = {}
 check_out_times = {}
 
+# Función para obtener la geolocalización de una ciudad
+def get_city_location(city):
+    # Coordenadas de ejemplo para las 20 ciudades
+    locations = {
+        "New York, NY": {"latitude": 40.7128, "longitude": -74.0060},
+        "Los Angeles, CA": {"latitude": 34.0522, "longitude": -118.2437},
+        "Chicago, IL": {"latitude": 41.8781, "longitude": -87.6298},
+        "Houston, TX": {"latitude": 29.7604, "longitude": -95.3698},
+        "Phoenix, AZ": {"latitude": 33.4484, "longitude": -112.0740},
+        "Philadelphia, PA": {"latitude": 39.9526, "longitude": -75.1652},
+        "San Antonio, TX": {"latitude": 29.4241, "longitude": -98.4936},
+        "San Diego, CA": {"latitude": 32.7157, "longitude": -117.1611},
+        "Dallas, TX": {"latitude": 32.7767, "longitude": -96.7970},
+        "San Jose, CA": {"latitude": 37.3382, "longitude": -121.8863},
+        "Austin, TX": {"latitude": 30.2672, "longitude": -97.7431},
+        "Jacksonville, FL": {"latitude": 30.3322, "longitude": -81.6557},
+        "Fort Worth, TX": {"latitude": 32.7555, "longitude": -97.3308},
+        "Columbus, OH": {"latitude": 39.9612, "longitude": -82.9988},
+        "Charlotte, NC": {"latitude": 35.2271, "longitude": -80.8431},
+        "San Francisco, CA": {"latitude": 37.7749, "longitude": -122.4194},
+        "Indianapolis, IN": {"latitude": 39.7684, "longitude": -86.1581},
+        "Seattle, WA": {"latitude": 47.6062, "longitude": -122.3321},
+        "Denver, CO": {"latitude": 39.7392, "longitude": -104.9903},
+        "Washington, DC": {"latitude": 38.9072, "longitude": -77.0369}
+    }
+    return locations.get(city, {"latitude": 0.0, "longitude": 0.0})
+
 # Definir las funciones de notificación
 def notificate_check_in(lang):
     t = translations[lang]
@@ -184,7 +219,8 @@ def notificate_check_in(lang):
     name = st.text_input(t['name'])
     role = st.text_input(t['role'])
     activity = st.text_input(t['activity'])
-    location = st.text_input(t['location'])
+    city = st.selectbox(t['location'], us_cities)
+    location = get_city_location(city)
     
     if st.button(t['submit']):
         check_in_time = dt.datetime.now(tz=pytz.timezone('UTC'))
@@ -192,8 +228,9 @@ def notificate_check_in(lang):
         st.write(f"{t['name']}: {name}")
         st.write(f"{t['role']}: {role}")
         st.write(f"{t['activity']}: {activity}")
-        st.write(f"{t['location']}: {location}")
+        st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
         st.write(f"{t['check_in_time']}: {check_in_time.isoformat()}")
+        st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
 
 def notificate_clock_out(lang):
     t = translations[lang]
@@ -202,7 +239,8 @@ def notificate_clock_out(lang):
     name = st.text_input(t['name'])
     role = st.text_input(t['role'])
     activity = st.text_input(t['activity'])
-    location = st.text_input(t['location'])
+    city = st.selectbox(t['location'], us_cities)
+    location = get_city_location(city)
     
     if st.button(t['submit']):
         check_out_time = dt.datetime.now(tz=pytz.timezone('UTC'))
@@ -210,8 +248,9 @@ def notificate_clock_out(lang):
         st.write(f"{t['name']}: {name}")
         st.write(f"{t['role']}: {role}")
         st.write(f"{t['activity']}: {activity}")
-        st.write(f"{t['location']}: {location}")
+        st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
         st.write(f"{t['clock_out_time']}: {check_out_time.isoformat()}")
+        st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
         
         if name in check_in_times:
             total_hours = (check_out_time - check_in_times[name]).total_seconds() / 3600
@@ -301,16 +340,6 @@ def project_management(lang):
     if st.button(t['assign_task']):
         st.success(t['task_assigned'])
         # Aquí se guardaría la tarea en una base de datos o archivo
-
-# Función de geolocalización en tiempo real
-def real_time_geolocation(lang):
-    t = translations[lang]
-    st.header(t['real_time_geolocation'])
-
-    # Simulación de una ubicación actual (se podría integrar una API de geolocalización real)
-    location = {"latitude": 40.7128, "longitude": -74.0060}  # Coordenadas de ejemplo (Nueva York)
-    st.write(f"{t['current_location']}: ({location['latitude']}, {location['longitude']})")
-    st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
 
 # Función de seguimiento de inventario
 def track_inventory(lang):
@@ -410,13 +439,17 @@ def track_work_hours(lang):
     
     user = st.selectbox(t['select_technician'], [user['name'] for user in users])
     action = st.selectbox(t['select_action'], t['work_actions'])
+    city = st.selectbox(t['location'], us_cities)
+    location = get_city_location(city)
     
     if st.button(t['register']):
         selected_user = next((u for u in users if u['name'] == user), None)
         if selected_user:
             timestamp = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
-            selected_user['working_hours'].append({'action': action, 'timestamp': timestamp})
+            selected_user['working_hours'].append({'action': action, 'timestamp': timestamp, 'location': location})
             st.write(f'{action} {t["registered_for"]} {user} a las {timestamp}')
+            st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
+            st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
             
             if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
                 st.write(f'{t["sent_email_with_timesheet"]} {user}')
@@ -424,7 +457,7 @@ def track_work_hours(lang):
 
 option = st.sidebar.selectbox(
     t['select_action'],
-    [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], t['predict_inventory'], t['project_management'], t['real_time_geolocation']]
+    [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], t['predict_inventory'], t['project_management']]
 )
 
 if option == t['check_in_notification']:
@@ -443,5 +476,3 @@ elif option == t['predict_inventory']:
     predict_inventory(lang)
 elif option == t['project_management']:
     project_management(lang)
-elif option == t['real_time_geolocation']:
-    real_time_geolocation(lang)
