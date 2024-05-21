@@ -3,12 +3,13 @@ import datetime as dt
 import pytz
 import holidays
 import requests
+import random
 
-# Simular datos de inventario y usuarios
-inventories = [
-    {"id": 1, "brand": "BrandA", "warehouse": "Warehouse1", "quantity": 100},
-    {"id": 2, "brand": "BrandB", "warehouse": "Warehouse2", "quantity": 150},
-]
+# Generar datos de inventario simulados
+brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE']
+warehouses = ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5']
+
+inventories = [{"id": i, "brand": random.choice(brands), "warehouse": random.choice(warehouses), "quantity": random.randint(50, 200)} for i in range(1, 201)]
 
 users = [
     {"id": 1, "name": "TechnicianA", "warehouse_id": 1, "projects": [], "working_hours": []},
@@ -128,9 +129,9 @@ def track_inventory(lang):
             st.write(f"{inventory['quantity']} {t['devices_of']} {inventory['brand']} {t['inventory_in']} {inventory['warehouse']}")
     
     elif action == t['mark_items']:
-        brand = st.selectbox('Select brand', ['BrandA', 'BrandB'])
+        brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
         quantity = st.number_input('Quantity to mark', min_value=0)
-        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2'])
+        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5'])
         
         if st.button(t['register']):
             for inventory in inventories:
@@ -139,7 +140,7 @@ def track_inventory(lang):
                     st.write(f'{quantity} {t["devices_of"]} {brand} {t["marked_for"]} {warehouse}')
     
     elif action == t['reserve_products']:
-        brand = st.selectbox('Select brand', ['BrandA', 'BrandB'])
+        brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
         quantity = st.number_input('Quantity to reserve', min_value=0)
         project = st.text_input('Project name')
         
@@ -150,13 +151,13 @@ def track_inventory(lang):
                     st.write(f'{quantity} {t["devices_of"]} {brand} {t["reserved_for_project"]} {project}')
     
     elif action == t['search_specifications']:
-        brand = st.selectbox('Select brand', ['BrandA', 'BrandB'])
+        brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
         
         if st.button(t['register']):
             st.write(f'{t["specifications_for"]} {brand}: (Detalles ficticios)')
     
     elif action == t['audit_inventory']:
-        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2'])
+        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5'])
         
         if st.button(t['register']):
             for inventory in inventories:
