@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import numpy as np
-import plotly.express as px
 from streamlit_option_menu import option_menu
 
 # Generar datos de inventario simulados
@@ -186,32 +185,12 @@ translations = {
 }
 
 # Opciones de la interfaz
-st.title(translations["en"]["title"])
+st.title(t['title'])
 
-# Selector de idioma centrado
-selected_language = st.selectbox("Select Language", options=["English", "Español"], index=0)
+st.markdown("<h2 style='text-align: center;'>Options</h2>", unsafe_allow_html=True)
+lang = st.selectbox("Select a language", ["es", "en"])
 
-lang = "en" if selected_language == "English" else "es"
 t = translations[lang]
-
-# Barra de menú lateral
-with st.sidebar:
-    selected = option_menu(
-        menu_title=t["options"], 
-        options=[
-            t["check_in_notification"], 
-            t["clock_out_notification"], 
-            t["inventory_tracking"], 
-            t["work_hours_tracking"], 
-            t["configure_notifications"], 
-            t["dashboard"], 
-            t["predict_inventory"], 
-            t["project_management"]
-        ],
-        icons=['house', 'cloud-upload', "list-task", 'gear'], 
-        menu_icon="cast", 
-        default_index=0,
-    )
 
 # Variables globales para almacenar horas de check-in y check-out
 check_in_times = {}
@@ -511,20 +490,35 @@ def track_work_hours():
             st.write(f'{t["sent_email_with_timesheet"]} {role}')
             st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
-if selected == t['check_in_notification']:
+# Menú principal
+option = option_menu(
+    menu_title="",  # No se muestra el título en el menú
+    options=[
+        t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], 
+        t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], 
+        t['predict_inventory'], t['project_management']
+    ],
+    icons=['check-square', 'clock', 'boxes', 'calendar', 'bell', 'bar-chart', 'line-chart', 'clipboard'],
+    menu_icon="cast",  # Icono del menú
+    default_index=0, 
+    orientation="horizontal"
+)
+
+if option == t['check_in_notification']:
     notificate_check_in()
-elif selected == t['clock_out_notification']:
+elif option == t['clock_out_notification']:
     notificate_clock_out()
-elif selected == t['inventory_tracking']:
+elif option == t['inventory_tracking']:
     track_inventory()
-elif selected == t['work_hours_tracking']:
+elif option == t['work_hours_tracking']:
     track_work_hours()
-elif selected == t['configure_notifications']:
+elif option == t['configure_notifications']:
     configure_notifications()
-elif selected == t['dashboard']:
+elif option == t['dashboard']:
     dashboard()
-elif selected == t['predict_inventory']:
+elif option == t['predict_inventory']:
     predict_inventory()
-elif selected == t['project_management']:
+elif option == t['project_management']:
     project_management()
+
 
