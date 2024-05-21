@@ -8,6 +8,20 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 import numpy as np
+import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
+
+# Cargar configuraciones de autenticación
+with open('config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+
+authenticator = stauth.Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days']
+)
 
 # Generar datos de inventario simulados
 brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE']
@@ -192,333 +206,341 @@ t = translations[lang]
 
 st.title(t['title'])  # Aseguramos que el título esté siempre en la parte superior
 
-# Variables globales para almacenar horas de check-in y check-out
-check_in_times = {}
-check_out_times = {}
+name, authentication_status, username = authenticator.login('Login', 'main')
 
-# Función para obtener la geolocalización de una ciudad
-def get_city_location(city):
-    # Coordenadas de ejemplo para las 20 ciudades
-    locations = {
-        "New York, NY": {"latitude": 40.7128, "longitude": -74.0060},
-        "Los Angeles, CA": {"latitude": 34.0522, "longitude": -118.2437},
-        "Chicago, IL": {"latitude": 41.8781, "longitude": -87.6298},
-        "Houston, TX": {"latitude": 29.7604, "longitude": -95.3698},
-        "Phoenix, AZ": {"latitude": 33.4484, "longitude": -112.0740},
-        "Philadelphia, PA": {"latitude": 39.9526, "longitude": -75.1652},
-        "San Antonio, TX": {"latitude": 29.4241, "longitude": -98.4936},
-        "San Diego, CA": {"latitude": 32.7157, "longitude": -117.1611},
-        "Dallas, TX": {"latitude": 32.7767, "longitude": -96.7970},
-        "San Jose, CA": {"latitude": 37.3382, "longitude": -121.8863},
-        "Austin, TX": {"latitude": 30.2672, "longitude": -97.7431},
-        "Jacksonville, FL": {"latitude": 30.3322, "longitude": -81.6557},
-        "Fort Worth, TX": {"latitude": 32.7555, "longitude": -97.3308},
-        "Columbus, OH": {"latitude": 39.9612, "longitude": -82.9988},
-        "Charlotte, NC": {"latitude": 35.2271, "longitude": -80.8431},
-        "San Francisco, CA": {"latitude": 37.7749, "longitude": -122.4194},
-        "Indianapolis, IN": {"latitude": 39.7684, "longitude": -86.1581},
-        "Seattle, WA": {"latitude": 47.6062, "longitude": -122.3321},
-        "Denver, CO": {"latitude": 39.7392, "longitude": -104.9903},
-        "Washington, DC": {"latitude": 38.9072, "longitude": -77.0369}
-    }
-    return locations.get(city, {"latitude": 0.0, "longitude": 0.0})
-
-# Definir las funciones de notificación
-def notificate_check_in(lang):
-    t = translations[lang]
-    st.header(t['check_in_notification'])
+if authentication_status:
+    authenticator.logout('Logout', 'sidebar')
+    st.sidebar.write(f'Welcome *{name}*')
     
-    name = st.text_input(t['name'])
-    role = st.text_input(t['role'])
-    activity = st.text_input(t['activity'])
-    city = st.selectbox(t['location'], us_cities)
-    location = get_city_location(city)
-    
-    if st.button(t['submit']):
-        check_in_time = dt.datetime.now(tz=pytz.timezone('UTC'))
-        check_in_times[name] = check_in_time
-        check_in_records.append({"name": name, "role": role, "activity": activity, "city": city, "location": location, "time": check_in_time})
-        st.write(f"{t['name']}: {name}")
-        st.write(f"{t['role']}: {role}")
-        st.write(f"{t['activity']}: {activity}")
-        st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
-        st.write(f"{t['check_in_time']}: {check_in_time.isoformat()}")
-        st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
+    # Variables globales para almacenar horas de check-in y check-out
+    check_in_times = {}
+    check_out_times = {}
 
-def notificate_clock_out(lang):
-    t = translations[lang]
-    st.header(t['clock_out_notification'])
-    
-    name = st.text_input(t['name'])
-    role = st.text_input(t['role'])
-    activity = st.text_input(t['activity'])
-    city = st.selectbox(t['location'], us_cities)
-    location = get_city_location(city)
-    
-    if st.button(t['submit']):
-        check_out_time = dt.datetime.now(tz=pytz.timezone('UTC'))
-        check_out_times[name] = check_out_time
-        clock_out_records.append({"name": name, "role": role, "activity": activity, "city": city, "location": location, "time": check_out_time})
-        st.write(f"{t['name']}: {name}")
-        st.write(f"{t['role']}: {role}")
-        st.write(f"{t['activity']}: {activity}")
-        st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
-        st.write(f"{t['clock_out_time']}: {check_out_time.isoformat()}")
-        st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
-        
-        if name in check_in_times:
-            total_hours = (check_out_time - check_in_times[name]).total_seconds() / 3600
-            st.write(f"{t['total_hours_worked']}: {total_hours:.2f} horas")
+    # Función para obtener la geolocalización de una ciudad
+    def get_city_location(city):
+        # Coordenadas de ejemplo para las 20 ciudades
+        locations = {
+            "New York, NY": {"latitude": 40.7128, "longitude": -74.0060},
+            "Los Angeles, CA": {"latitude": 34.0522, "longitude": -118.2437},
+            "Chicago, IL": {"latitude": 41.8781, "longitude": -87.6298},
+            "Houston, TX": {"latitude": 29.7604, "longitude": -95.3698},
+            "Phoenix, AZ": {"latitude": 33.4484, "longitude": -112.0740},
+            "Philadelphia, PA": {"latitude": 39.9526, "longitude": -75.1652},
+            "San Antonio, TX": {"latitude": 29.4241, "longitude": -98.4936},
+            "San Diego, CA": {"latitude": 32.7157, "longitude": -117.1611},
+            "Dallas, TX": {"latitude": 32.7767, "longitude": -96.7970},
+            "San Jose, CA": {"latitude": 37.3382, "longitude": -121.8863},
+            "Austin, TX": {"latitude": 30.2672, "longitude": -97.7431},
+            "Jacksonville, FL": {"latitude": 30.3322, "longitude": -81.6557},
+            "Fort Worth, TX": {"latitude": 32.7555, "longitude": -97.3308},
+            "Columbus, OH": {"latitude": 39.9612, "longitude": -82.9988},
+            "Charlotte, NC": {"latitude": 35.2271, "longitude": -80.8431},
+            "San Francisco, CA": {"latitude": 37.7749, "longitude": -122.4194},
+            "Indianapolis, IN": {"latitude": 39.7684, "longitude": -86.1581},
+            "Seattle, WA": {"latitude": 47.6062, "longitude": -122.3321},
+            "Denver, CO": {"latitude": 39.7392, "longitude": -104.9903},
+            "Washington, DC": {"latitude": 38.9072, "longitude": -77.0369}
+        }
+        return locations.get(city, {"latitude": 0.0, "longitude": 0.0})
 
-# Función de configuración de notificaciones personalizadas
-def configure_notifications(lang):
-    t = translations[lang]
-    st.header(t['configure_notifications'])
+    # Definir las funciones de notificación
+    def notificate_check_in(lang):
+        t = translations[lang]
+        st.header(t['check_in_notification'])
 
-    notification_type = st.selectbox(t['select_action'], [t['inventory_below_threshold'], t['break_time_exceeded']])
-    threshold = st.number_input(t['threshold'], min_value=0, value=10)
-    email = st.text_input(t['email'])
+        name = st.text_input(t['name'])
+        role = st.text_input(t['role'])
+        activity = st.text_input(t['activity'])
+        city = st.selectbox(t['location'], us_cities)
+        location = get_city_location(city)
 
-    if st.button(t['save_settings']):
-        st.success(t['settings_saved'])
-        # Aquí se guardaría la configuración en una base de datos o archivo
+        if st.button(t['submit']):
+            check_in_time = dt.datetime.now(tz=pytz.timezone('UTC'))
+            check_in_times[name] = check_in_time
+            check_in_records.append({"name": name, "role": role, "activity": activity, "city": city, "location": location, "time": check_in_time})
+            st.write(f"{t['name']}: {name}")
+            st.write(f"{t['role']}: {role}")
+            st.write(f"{t['activity']}: {activity}")
+            st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
+            st.write(f"{t['check_in_time']}: {check_in_time.isoformat()}")
+            st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
 
-# Función de dashboard de reportes
-def dashboard(lang):
-    t = translations[lang]
-    st.header(t['dashboard'])
+    def notificate_clock_out(lang):
+        t = translations[lang]
+        st.header(t['clock_out_notification'])
 
-    # Gráficos de Check-In y Clock-Out
-    if check_in_records or clock_out_records:
-        st.subheader("Check-In and Clock-Out Records")
-        check_in_df = pd.DataFrame(check_in_records)
-        clock_out_df = pd.DataFrame(clock_out_records)
-        
-        if not check_in_df.empty:
-            st.write("Check-In Records")
-            st.table(check_in_df)
-            st.line_chart(check_in_df['time'])
-        
-        if not clock_out_df.empty:
-            st.write("Clock-Out Records")
-            st.table(clock_out_df)
-            st.line_chart(clock_out_df['time'])
+        name = st.text_input(t['name'])
+        role = st.text_input(t['role'])
+        activity = st.text_input(t['activity'])
+        city = st.selectbox(t['location'], us_cities)
+        location = get_city_location(city)
 
-    # Gráficos de horas trabajadas
-    if work_hours_records:
-        st.subheader("Work Hours Records")
-        work_hours_df = pd.DataFrame(work_hours_records)
-        st.table(work_hours_df)
-        st.line_chart(work_hours_df['timestamp'])
+        if st.button(t['submit']):
+            check_out_time = dt.datetime.now(tz=pytz.timezone('UTC'))
+            check_out_times[name] = check_out_time
+            clock_out_records.append({"name": name, "role": role, "activity": activity, "city": city, "location": location, "time": check_out_time})
+            st.write(f"{t['name']}: {name}")
+            st.write(f"{t['role']}: {role}")
+            st.write(f"{t['activity']}: {activity}")
+            st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
+            st.write(f"{t['clock_out_time']}: {check_out_time.isoformat()}")
+            st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
 
-    # Gráficos de gestión de proyectos
-    if project_management_records:
-        st.subheader("Project Management Records")
-        project_management_df = pd.DataFrame(project_management_records)
-        st.table(project_management_df)
-        st.line_chart(project_management_df['due_date'])
+            if name in check_in_times:
+                total_hours = (check_out_time - check_in_times[name]).total_seconds() / 3600
+                st.write(f"{t['total_hours_worked']}: {total_hours:.2f} horas")
 
-    # Ejemplo de gráficos de inventario
-    st.subheader("Inventory Records")
-    df = pd.DataFrame(inventories)
-    brand_counts = df.groupby('brand')['quantity'].sum()
-    warehouse_counts = df.groupby('warehouse')['quantity'].sum()
+    # Función de configuración de notificaciones personalizadas
+    def configure_notifications(lang):
+        t = translations[lang]
+        st.header(t['configure_notifications'])
 
-    fig1, ax1 = plt.subplots()
-    brand_counts.plot(kind='bar', ax=ax1)
-    ax1.set_title(t['inventory_by_brand'])
-    ax1.set_xlabel(t['select_brand'])
-    ax1.set_ylabel("Quantity")
+        notification_type = st.selectbox(t['select_action'], [t['inventory_below_threshold'], t['break_time_exceeded']])
+        threshold = st.number_input(t['threshold'], min_value=0, value=10)
+        email = st.text_input(t['email'])
 
-    fig2, ax2 = plt.subplots()
-    warehouse_counts.plot(kind='bar', ax=ax2)
-    ax2.set_title(t['inventory_by_warehouse'])
-    ax2.set_xlabel(t['select_warehouse'])
-    ax2.set_ylabel("Quantity")
+        if st.button(t['save_settings']):
+            st.success(t['settings_saved'])
+            # Aquí se guardaría la configuración en una base de datos o archivo
 
-    st.pyplot(fig1)
-    st.pyplot(fig2)
+    # Función de dashboard de reportes
+    def dashboard(lang):
+        t = translations[lang]
+        st.header(t['dashboard'])
 
-    # Ejemplo de tabla dinámica de horas trabajadas
-    df_hours = pd.DataFrame(users)
-    st.table(df_hours)
+        # Gráficos de Check-In y Clock-Out
+        if check_in_records or clock_out_records:
+            st.subheader("Check-In and Clock-Out Records")
+            check_in_df = pd.DataFrame(check_in_records)
+            clock_out_df = pd.DataFrame(clock_out_records)
 
-# Función de análisis predictivo
-def predict_inventory(lang):
-    t = translations[lang]
-    st.header(t['predict_inventory'])
+            if not check_in_df.empty:
+                st.write("Check-In Records")
+                st.table(check_in_df)
+                st.line_chart(check_in_df['time'])
 
-    selected_brand = st.selectbox(t['select_brand'], brands)
-    selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
-    prediction_days = st.selectbox("Select prediction period (days)", [30, 60, 90, 120])
+            if not clock_out_df.empty:
+                st.write("Clock-Out Records")
+                st.table(clock_out_df)
+                st.line_chart(clock_out_df['time'])
 
-    # Filtrar datos históricos por marca y bodega
-    historical_data = [inv for inv in inventories if inv['brand'] == selected_brand and inv['warehouse'] == selected_warehouse]
+        # Gráficos de horas trabajadas
+        if work_hours_records:
+            st.subheader("Work Hours Records")
+            work_hours_df = pd.DataFrame(work_hours_records)
+            st.table(work_hours_df)
+            st.line_chart(work_hours_df['timestamp'])
 
-    if not historical_data:
-        st.write(t['no_data_available'])
-    else:
-        df = pd.DataFrame(historical_data)
-        df['day'] = range(1, len(df) + 1)  # Asumimos un día por cada registro
-        X = df['day'].values.reshape(-1, 1)
-        y = df['quantity'].values
+        # Gráficos de gestión de proyectos
+        if project_management_records:
+            st.subheader("Project Management Records")
+            project_management_df = pd.DataFrame(project_management_records)
+            st.table(project_management_df)
+            st.line_chart(project_management_df['due_date'])
 
-        model = LinearRegression()
-        model.fit(X, y)
+        # Ejemplo de gráficos de inventario
+        st.subheader("Inventory Records")
+        df = pd.DataFrame(inventories)
+        brand_counts = df.groupby('brand')['quantity'].sum()
+        warehouse_counts = df.groupby('warehouse')['quantity'].sum()
 
-        future_days = np.array(range(len(df) + 1, len(df) + 1 + prediction_days)).reshape(-1, 1)
-        predicted_quantities = model.predict(future_days)
+        fig1, ax1 = plt.subplots()
+        brand_counts.plot(kind='bar', ax=ax1)
+        ax1.set_title(t['inventory_by_brand'])
+        ax1.set_xlabel(t['select_brand'])
+        ax1.set_ylabel("Quantity")
 
-        st.write(t['predictions_for_inventory'])
-        st.line_chart(predicted_quantities)
+        fig2, ax2 = plt.subplots()
+        warehouse_counts.plot(kind='bar', ax=ax2)
+        ax2.set_title(t['inventory_by_warehouse'])
+        ax2.set_xlabel(t['select_warehouse'])
+        ax2.set_ylabel("Quantity")
 
-# Función de gestión de proyectos
-def project_management(lang):
-    t = translations[lang]
-    st.header(t['project_management'])
+        st.pyplot(fig1)
+        st.pyplot(fig2)
 
-    project_name = st.text_input(t['name'])
-    role_category = st.selectbox(t['select_action'], list(roles.keys()))
-    role = st.selectbox(t['select_technician'], roles[role_category])
-    task_description = st.text_area(t['task_description'])
-    due_date = st.date_input(t['due_date'])
+    # Función de análisis predictivo
+    def predict_inventory(lang):
+        t = translations[lang]
+        st.header(t['predict_inventory'])
 
-    if st.button(t['assign_task']):
-        project_management_records.append({"project_name": project_name, "role": role, "task_description": task_description, "due_date": due_date})
-        st.success(t['task_assigned'])
-        # Aquí se guardaría la tarea en una base de datos o archivo
-
-# Función de seguimiento de inventario
-def track_inventory(lang):
-    t = translations[lang]
-    st.header(t['inventory_tracking'])
-    
-    action = st.selectbox(t['select_action'], [t['view_inventory'], t['mark_items'], t['reserve_products'], t['search_specifications'], t['audit_inventory']])
-    
-    if action == t['view_inventory']:
-        st.write(t['inventory_available'])
-        
-        # Filtros para los gráficos
         selected_brand = st.selectbox(t['select_brand'], brands)
         selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
-        
-        df = pd.DataFrame(inventories)
-        
-        if selected_brand:
-            df = df[df['brand'] == selected_brand]
-        if selected_warehouse:
-            df = df[df['warehouse'] == selected_warehouse]
+        prediction_days = st.selectbox("Select prediction period (days)", [30, 60, 90, 120])
 
-        if df.empty:
+        # Filtrar datos históricos por marca y bodega
+        historical_data = [inv for inv in inventories if inv['brand'] == selected_brand and inv['warehouse'] == selected_warehouse]
+
+        if not historical_data:
             st.write(t['no_data_available'])
         else:
-            brand_counts = df.groupby('brand')['quantity'].sum()
-            warehouse_counts = df.groupby('warehouse')['quantity'].sum()
+            df = pd.DataFrame(historical_data)
+            df['day'] = range(1, len(df) + 1)  # Asumimos un día por cada registro
+            X = df['day'].values.reshape(-1, 1)
+            y = df['quantity'].values
 
-            fig1, ax1 = plt.subplots()
-            brand_counts.plot(kind='bar', ax=ax1)
-            ax1.set_title(t['inventory_by_brand'])
-            ax1.set_xlabel(t['select_brand'])
-            ax1.set_ylabel("Quantity")
+            model = LinearRegression()
+            model.fit(X, y)
 
-            fig2, ax2 = plt.subplots()
-            warehouse_counts.plot(kind='bar', ax=ax2)
-            ax2.set_title(t['inventory_by_warehouse'])
-            ax2.set_xlabel(t['select_warehouse'])
-            ax2.set_ylabel("Quantity")
+            future_days = np.array(range(len(df) + 1, len(df) + 1 + prediction_days)).reshape(-1, 1)
+            predicted_quantities = model.predict(future_days)
 
-            st.pyplot(fig1)
-            st.pyplot(fig2)
-    
-    elif action == t['mark_items']:
-        brand = st.selectbox(t['select_brand'], brands)
-        quantity = st.number_input('Quantity to mark', min_value=0)
-        warehouse = st.selectbox(t['select_warehouse'], warehouses)
-        
+            st.write(t['predictions_for_inventory'])
+            st.line_chart(predicted_quantities)
+
+    # Función de gestión de proyectos
+    def project_management(lang):
+        t = translations[lang]
+        st.header(t['project_management'])
+
+        project_name = st.text_input(t['name'])
+        role_category = st.selectbox(t['select_action'], list(roles.keys()))
+        role = st.selectbox(t['select_technician'], roles[role_category])
+        task_description = st.text_area(t['task_description'])
+        due_date = st.date_input(t['due_date'])
+
+        if st.button(t['assign_task']):
+            project_management_records.append({"project_name": project_name, "role": role, "task_description": task_description, "due_date": due_date})
+            st.success(t['task_assigned'])
+            # Aquí se guardaría la tarea en una base de datos o archivo
+
+    # Función de seguimiento de inventario
+    def track_inventory(lang):
+        t = translations[lang]
+        st.header(t['inventory_tracking'])
+
+        action = st.selectbox(t['select_action'], [t['view_inventory'], t['mark_items'], t['reserve_products'], t['search_specifications'], t['audit_inventory']])
+
+        if action == t['view_inventory']:
+            st.write(t['inventory_available'])
+
+            # Filtros para los gráficos
+            selected_brand = st.selectbox(t['select_brand'], brands)
+            selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
+
+            df = pd.DataFrame(inventories)
+
+            if selected_brand:
+                df = df[df['brand'] == selected_brand]
+            if selected_warehouse:
+                df = df[df['warehouse'] == selected_warehouse]
+
+            if df.empty:
+                st.write(t['no_data_available'])
+            else:
+                brand_counts = df.groupby('brand')['quantity'].sum()
+                warehouse_counts = df.groupby('warehouse')['quantity'].sum()
+
+                fig1, ax1 = plt.subplots()
+                brand_counts.plot(kind='bar', ax=ax1)
+                ax1.set_title(t['inventory_by_brand'])
+                ax1.set_xlabel(t['select_brand'])
+                ax1.set_ylabel("Quantity")
+
+                fig2, ax2 = plt.subplots()
+                warehouse_counts.plot(kind='bar', ax=ax2)
+                ax2.set_title(t['inventory_by_warehouse'])
+                ax2.set_xlabel(t['select_warehouse'])
+                ax2.set_ylabel("Quantity")
+
+                st.pyplot(fig1)
+                st.pyplot(fig2)
+
+        elif action == t['mark_items']:
+            brand = st.selectbox(t['select_brand'], brands)
+            quantity = st.number_input('Quantity to mark', min_value=0)
+            warehouse = st.selectbox(t['select_warehouse'], warehouses)
+
+            if st.button(t['register']):
+                for inventory in inventories:
+                    if inventory['brand'] == brand and inventory['warehouse'] == warehouse:
+                        inventory['quantity'] -= quantity
+                        st.write(f'{quantity} {t["devices_of"]} {brand} {t["marked_for"]} {warehouse}')
+                        break  # Ensure it only happens once
+
+        elif action == t['reserve_products']:
+            brand = st.selectbox(t['select_brand'], brands)
+            quantity = st.number_input('Quantity to reserve', min_value=0)
+            project = st.text_input('Project name')
+
+            if st.button(t['register']):
+                for inventory in inventories:
+                    if inventory['brand'] == brand:
+                        inventory['quantity'] -= quantity
+                        st.write(f'{quantity} {t["devices_of"]} {brand} {t["reserved_for_project"]} {project}')
+                        break  # Ensure it only happens once
+
+        elif action == t['search_specifications']:
+            brand = st.selectbox(t['select_brand'], brands)
+
+            if st.button(t['register']):
+                st.write(f'{t["specifications_for"]} {brand}: {t["brand_specifications"][brand]}')
+
+        elif action == t['audit_inventory']:
+            warehouse = st.selectbox(t['select_warehouse'], warehouses)
+
+            filtered_inventories = [inv for inv in inventories if inv['warehouse'] == warehouse]
+
+            if not filtered_inventories:
+                st.write(t['no_data_available'])
+            else:
+                df = pd.DataFrame(filtered_inventories)
+                brand_counts = df.groupby('brand')['quantity'].sum()
+
+                fig, ax = plt.subplots()
+                brand_counts.plot(kind='bar', ax=ax)
+                ax.set_title(f"{t['inventory_by_warehouse']} {warehouse}")
+                ax.set_xlabel("Brand")
+                ax.set_ylabel("Quantity")
+
+                st.pyplot(fig)
+
+    # Función de seguimiento de horas trabajadas
+    def track_work_hours(lang):
+        t = translations[lang]
+        st.header(t['work_hours_tracking'])
+
+        name = st.text_input(t['name'])
+        role_category = st.selectbox(t['select_action'], list(roles.keys()))
+        role = st.selectbox(t['select_technician'], roles[role_category])
+        action = st.selectbox(t['select_action'], t['work_actions'])
+        city = st.selectbox(t['location'], us_cities)
+        location = get_city_location(city)
+
         if st.button(t['register']):
-            for inventory in inventories:
-                if inventory['brand'] == brand and inventory['warehouse'] == warehouse:
-                    inventory['quantity'] -= quantity
-                    st.write(f'{quantity} {t["devices_of"]} {brand} {t["marked_for"]} {warehouse}')
-                    break  # Ensure it only happens once
-    
-    elif action == t['reserve_products']:
-        brand = st.selectbox(t['select_brand'], brands)
-        quantity = st.number_input('Quantity to reserve', min_value=0)
-        project = st.text_input('Project name')
-        
-        if st.button(t['register']):
-            for inventory in inventories:
-                if inventory['brand'] == brand:
-                    inventory['quantity'] -= quantity
-                    st.write(f'{quantity} {t["devices_of"]} {brand} {t["reserved_for_project"]} {project}')
-                    break  # Ensure it only happens once
-    
-    elif action == t['search_specifications']:
-        brand = st.selectbox(t['select_brand'], brands)
-        
-        if st.button(t['register']):
-            st.write(f'{t["specifications_for"]} {brand}: {t["brand_specifications"][brand]}')
-    
-    elif action == t['audit_inventory']:
-        warehouse = st.selectbox(t['select_warehouse'], warehouses)
-        
-        filtered_inventories = [inv for inv in inventories if inv['warehouse'] == warehouse]
+            timestamp = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
+            work_hours_records.append({"name": name, "role": role, "action": action, "timestamp": timestamp, "city": city, "location": location})
+            st.write(f'{action} {t["registered_for"]} {name} a las {timestamp}')
+            st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
+            st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
 
-        if not filtered_inventories:
-            st.write(t['no_data_available'])
-        else:
-            df = pd.DataFrame(filtered_inventories)
-            brand_counts = df.groupby('brand')['quantity'].sum()
+            if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
+                st.write(f'{t["sent_email_with_timesheet"]} {name}')
+                st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
 
-            fig, ax = plt.subplots()
-            brand_counts.plot(kind='bar', ax=ax)
-            ax.set_title(f"{t['inventory_by_warehouse']} {warehouse}")
-            ax.set_xlabel("Brand")
-            ax.set_ylabel("Quantity")
+    option = st.sidebar.selectbox(
+        t['select_action'],
+        [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], t['predict_inventory'], t['project_management']]
+    )
 
-            st.pyplot(fig)
+    if option == t['check_in_notification']:
+        notificate_check_in(lang)
+    elif option == t['clock_out_notification']:
+        notificate_clock_out(lang)
+    elif option == t['inventory_tracking']:
+        track_inventory(lang)
+    elif option == t['work_hours_tracking']:
+        track_work_hours(lang)
+    elif option == t['configure_notifications']:
+        configure_notifications(lang)
+    elif option == t['dashboard']:
+        dashboard(lang)
+    elif option == t['predict_inventory']:
+        predict_inventory(lang)
+    elif option == t['project_management']:
+        project_management(lang)
 
-# Función de seguimiento de horas trabajadas
-def track_work_hours(lang):
-    t = translations[lang]
-    st.header(t['work_hours_tracking'])
-    
-    role_category = st.selectbox(t['select_action'], list(roles.keys()))
-    role = st.selectbox(t['select_technician'], roles[role_category])
-    action = st.selectbox(t['select_action'], t['work_actions'])
-    city = st.selectbox(t['location'], us_cities)
-    location = get_city_location(city)
-    
-    if st.button(t['register']):
-        timestamp = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
-        work_hours_records.append({"role": role, "action": action, "timestamp": timestamp, "city": city, "location": location})
-        st.write(f'{action} {t["registered_for"]} {role} a las {timestamp}')
-        st.write(f"{t['location']}: {city} ({location['latitude']}, {location['longitude']})")
-        st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
-            
-        if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
-            st.write(f'{t["sent_email_with_timesheet"]} {role}')
-            st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
-
-option = st.sidebar.selectbox(
-    t['select_action'],
-    [t['check_in_notification'], t['clock_out_notification'], t['inventory_tracking'], t['work_hours_tracking'], t['configure_notifications'], t['dashboard'], t['predict_inventory'], t['project_management']]
-)
-
-if option == t['check_in_notification']:
-    notificate_check_in(lang)
-elif option == t['clock_out_notification']:
-    notificate_clock_out(lang)
-elif option == t['inventory_tracking']:
-    track_inventory(lang)
-elif option == t['work_hours_tracking']:
-    track_work_hours(lang)
-elif option == t['configure_notifications']:
-    configure_notifications(lang)
-elif option == t['dashboard']:
-    dashboard(lang)
-elif option == t['predict_inventory']:
-    predict_inventory(lang)
-elif option == t['project_management']:
-    project_management(lang)
+elif authentication_status == False:
+    st.error('Username/password is incorrect')
+elif authentication_status == None:
+    st.warning('Please enter your username and password')
