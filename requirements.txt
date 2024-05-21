@@ -4,3 +4,5 @@ requests
 pytz
 matplotlib
 pandas
+scikit-learn
+requests
