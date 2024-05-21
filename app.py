@@ -50,7 +50,14 @@ translations = {
         "spanish": "Español",
         "english": "Inglés",
         "select_warehouse": "Selecciona la bodega",
-        "no_data_available": "No hay datos disponibles"
+        "select_brand": "Selecciona la marca",
+        "no_data_available": "No hay datos disponibles",
+        "name": "Nombre",
+        "role": "Cargo",
+        "activity": "Actividad a realizar",
+        "location": "Ubicación",
+        "submit": "Enviar",
+        "check_in_time": "Hora de check-in"
     },
     "en": {
         "title": "Hootsi Application",
@@ -82,7 +89,14 @@ translations = {
         "spanish": "Spanish",
         "english": "English",
         "select_warehouse": "Select the warehouse",
-        "no_data_available": "No data available"
+        "select_brand": "Select the brand",
+        "no_data_available": "No data available",
+        "name": "Name",
+        "role": "Role",
+        "activity": "Activity to perform",
+        "location": "Location",
+        "submit": "Submit",
+        "check_in_time": "Check-in time"
     }
 }
 
@@ -96,22 +110,21 @@ st.title(t['title'])  # Aseguramos que el título esté siempre en la parte supe
 
 # Definir las funciones de notificación
 def notificate_check_in(lang):
-    email_service = "model_postmark"  # Placeholder
-    us_holidays = holidays.US()
-    today_date = dt.datetime.now(tz=pytz.timezone('UTC'))
-
-    users = [{"id": 315, "project_id": None, "time_zone": "America/New_York", "is_clocked_in": 0, "email": "julian.torres@ahtglobal.com", "first_name": "User", "warehouse_id": 1, "tenant_id": 1}]
-
-    if today_date not in us_holidays:
-        for user in users:
-            if user['id'] == 315 and user['project_id'] is None:
-                user_tz = pytz.timezone(user['time_zone'])
-                utc_now = dt.datetime.now(tz=pytz.timezone('UTC'))
-                user_now = utc_now.astimezone(user_tz)
-
-                if user_now.hour == 8 and user['is_clocked_in'] != 1:  # Recordatorio de clock in
-                    st.write(f"Sending reminder email to: {user['email']}")
-                    st.write("Hootsi would like to remind you to clock in and then check in for your project today.")
+    t = translations[lang]
+    st.header(t['check_in_notification'])
+    
+    name = st.text_input(t['name'])
+    role = st.text_input(t['role'])
+    activity = st.text_input(t['activity'])
+    location = st.text_input(t['location'])
+    
+    if st.button(t['submit']):
+        check_in_time = dt.datetime.now(tz=pytz.timezone('UTC')).isoformat()
+        st.write(f"{t['name']}: {name}")
+        st.write(f"{t['role']}: {role}")
+        st.write(f"{t['activity']}: {activity}")
+        st.write(f"{t['location']}: {location}")
+        st.write(f"{t['check_in_time']}: {check_in_time}")
 
 def notificate_clock_out(lang):
     email_service = "model_postmark"  # Placeholder
@@ -139,33 +152,43 @@ def track_inventory(lang):
     
     if action == t['view_inventory']:
         st.write(t['inventory_available'])
-        for inventory in inventories:
-            st.write(f"{inventory['quantity']} {t['devices_of']} {inventory['brand']} {t['inventory_in']} {inventory['warehouse']}")
         
-        # Graficar inventario por marca
+        # Filtros para los gráficos
+        selected_brand = st.selectbox(t['select_brand'], brands)
+        selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
+        
         df = pd.DataFrame(inventories)
-        brand_counts = df.groupby('brand')['quantity'].sum()
-        warehouse_counts = df.groupby('warehouse')['quantity'].sum()
+        
+        if selected_brand:
+            df = df[df['brand'] == selected_brand]
+        if selected_warehouse:
+            df = df[df['warehouse'] == selected_warehouse]
 
-        fig1, ax1 = plt.subplots()
-        brand_counts.plot(kind='bar', ax=ax1)
-        ax1.set_title("Inventory by Brand")
-        ax1.set_xlabel("Brand")
-        ax1.set_ylabel("Quantity")
+        if df.empty:
+            st.write(t['no_data_available'])
+        else:
+            brand_counts = df.groupby('brand')['quantity'].sum()
+            warehouse_counts = df.groupby('warehouse')['quantity'].sum()
 
-        fig2, ax2 = plt.subplots()
-        warehouse_counts.plot(kind='bar', ax=ax2)
-        ax2.set_title("Inventory by Warehouse")
-        ax2.set_xlabel("Warehouse")
-        ax2.set_ylabel("Quantity")
+            fig1, ax1 = plt.subplots()
+            brand_counts.plot(kind='bar', ax=ax1)
+            ax1.set_title("Inventory by Brand")
+            ax1.set_xlabel("Brand")
+            ax1.set_ylabel("Quantity")
 
-        st.pyplot(fig1)
-        st.pyplot(fig2)
+            fig2, ax2 = plt.subplots()
+            warehouse_counts.plot(kind='bar', ax=ax2)
+            ax2.set_title("Inventory by Warehouse")
+            ax2.set_xlabel("Warehouse")
+            ax2.set_ylabel("Quantity")
+
+            st.pyplot(fig1)
+            st.pyplot(fig2)
     
     elif action == t['mark_items']:
-        brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
+        brand = st.selectbox(t['select_brand'], brands)
         quantity = st.number_input('Quantity to mark', min_value=0)
-        warehouse = st.selectbox('Select warehouse', ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5'])
+        warehouse = st.selectbox(t['select_warehouse'], warehouses)
         
         if st.button(t['register']):
             for inventory in inventories:
@@ -175,7 +198,7 @@ def track_inventory(lang):
                     break  # Ensure it only happens once
     
     elif action == t['reserve_products']:
-        brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
+        brand = st.selectbox(t['select_brand'], brands)
         quantity = st.number_input('Quantity to reserve', min_value=0)
         project = st.text_input('Project name')
         
@@ -187,13 +210,13 @@ def track_inventory(lang):
                     break  # Ensure it only happens once
     
     elif action == t['search_specifications']:
-        brand = st.selectbox('Select brand', ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE'])
+        brand = st.selectbox(t['select_brand'], brands)
         
         if st.button(t['register']):
             st.write(f'{t["specifications_for"]} {brand}: (Detalles ficticios)')
     
     elif action == t['audit_inventory']:
-        warehouse = st.selectbox(t['select_warehouse'], ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5'])
+        warehouse = st.selectbox(t['select_warehouse'], warehouses)
         
         filtered_inventories = [inv for inv in inventories if inv['warehouse'] == warehouse]
 
