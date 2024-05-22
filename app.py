@@ -1,40 +1,47 @@
 import streamlit as st
 import datetime as dt
 import pytz
-import requests
 import random
 import matplotlib.pyplot as plt
 import pandas as pd
+import numpy as np
 from sklearn.linear_model import LinearRegression
+from streamlit_option_menu import option_menu
+from fpdf import FPDF
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from statsmodels.tsa.arima.model import ARIMA
 from prophet import Prophet
-import numpy as np
-from streamlit_option_menu import option_menu
-from fpdf import FPDF
 
 # Generar datos de inventario simulados
-categories = ['Technology', 'Communications', 'Vehicles', 'Furniture', 'Office Supplies']
-brands = [f'Brand{i}' for i in range(1, 21)]
-warehouses = [f'Warehouse{i}' for i in range(1, 21)]
-locations = [
+brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE', 'BrandF', 'BrandG', 'BrandH', 'BrandI', 'BrandJ',
+          'BrandK', 'BrandL', 'BrandM', 'BrandN', 'BrandO', 'BrandP', 'BrandQ', 'BrandR', 'BrandS', 'BrandT']
+warehouses = ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5', 'Warehouse6', 'Warehouse7',
+              'Warehouse8', 'Warehouse9', 'Warehouse10', 'Warehouse11', 'Warehouse12', 'Warehouse13', 'Warehouse14',
+              'Warehouse15', 'Warehouse16', 'Warehouse17', 'Warehouse18', 'Warehouse19', 'Warehouse20']
+categories = ['Technology', 'Communications', 'Vehicles', 'Furniture', 'Food', 'Clothing', 'Accessories', 'Tools',
+              'Toys', 'Sports', 'Medical', 'Books', 'Music', 'Games', 'Beauty', 'Health', 'Garden', 'Office',
+              'Household', 'Electronics']
+
+inventories = [{"id": i,
+                "brand": random.choice(brands),
+                "warehouse": random.choice(warehouses),
+                "category": random.choice(categories),
+                "quantity": random.randint(50, 200),
+                "price": round(random.uniform(10.0, 1000.0), 2),
+                "date": dt.datetime.now() - pd.DateOffset(months=i)} for i in range(1, 201)]
+
+work_hours_records = []
+check_in_records = []
+clock_out_records = []
+project_management_records = []
+
+# 20 ciudades más importantes de EE.UU.
+us_cities = [
     "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
     "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA",
     "Austin, TX", "Jacksonville, FL", "Fort Worth, TX", "Columbus, OH", "Charlotte, NC",
     "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Washington, DC"
 ]
-
-data = []
-for i in range(1, 61):
-    date = dt.datetime.now() - dt.timedelta(days=i*30)
-    for brand in brands:
-        category = random.choice(categories)
-        for warehouse, location in zip(warehouses, locations):
-            quantity = random.randint(50, 200)
-            price = random.uniform(20, 500)
-            data.append([date, brand, warehouse, location, category, quantity, price])
-
-df_inventory = pd.DataFrame(data, columns=['date', 'brand', 'warehouse', 'location', 'category', 'quantity', 'price'])
 
 # Roles y cargos
 roles = {
@@ -86,26 +93,26 @@ translations = {
         "clock_out_time": "Hora de clock-out",
         "total_hours_worked": "Total de horas trabajadas",
         "brand_specifications": {
-            "Brand1": "Descripción de Brand1",
-            "Brand2": "Descripción de Brand2",
-            "Brand3": "Descripción de Brand3",
-            "Brand4": "Descripción de Brand4",
-            "Brand5": "Descripción de Brand5",
-            "Brand6": "Descripción de Brand6",
-            "Brand7": "Descripción de Brand7",
-            "Brand8": "Descripción de Brand8",
-            "Brand9": "Descripción de Brand9",
-            "Brand10": "Descripción de Brand10",
-            "Brand11": "Descripción de Brand11",
-            "Brand12": "Descripción de Brand12",
-            "Brand13": "Descripción de Brand13",
-            "Brand14": "Descripción de Brand14",
-            "Brand15": "Descripción de Brand15",
-            "Brand16": "Descripción de Brand16",
-            "Brand17": "Descripción de Brand17",
-            "Brand18": "Descripción de Brand18",
-            "Brand19": "Descripción de Brand19",
-            "Brand20": "Descripción de Brand20"
+            "BrandA": "BrandA es conocida por su durabilidad y eficiencia. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "BrandB": "BrandB ofrece una excelente relación calidad-precio. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandC": "BrandC es famosa por su diseño elegante. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "BrandD": "BrandD tiene productos de alta gama. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
+            "BrandE": "BrandE es conocida por su accesibilidad. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium.",
+            "BrandF": "BrandF destaca por su innovación. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "BrandG": "BrandG es sinónimo de calidad. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "BrandH": "BrandH es conocida por su diseño robusto. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
+            "BrandI": "BrandI ofrece productos económicos. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandJ": "BrandJ es popular entre jóvenes. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium.",
+            "BrandK": "BrandK es conocida por su eficiencia energética. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "BrandL": "BrandL ofrece alta durabilidad. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "BrandM": "BrandM es conocida por su soporte técnico. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
+            "BrandN": "BrandN destaca por su bajo coste. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandO": "BrandO es sinónimo de diseño elegante. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "BrandP": "BrandP es conocida por su versatilidad. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "BrandQ": "BrandQ ofrece productos de lujo. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
+            "BrandR": "BrandR es conocida por su confiabilidad. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandS": "BrandS destaca por su innovación tecnológica. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "BrandT": "BrandT es popular en el mercado. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7."
         },
         "work_actions": ["Inicio de jornada", "Llegada a proyecto", "Toma de descansos", "Salida de proyecto", "Fin de jornada"],
         "configure_notifications": "Configurar Notificaciones Personalizadas",
@@ -171,26 +178,26 @@ translations = {
         "clock_out_time": "Clock-out time",
         "total_hours_worked": "Total hours worked",
         "brand_specifications": {
-            "Brand1": "Description of Brand1",
-            "Brand2": "Description of Brand2",
-            "Brand3": "Description of Brand3",
-            "Brand4": "Description of Brand4",
-            "Brand5": "Description of Brand5",
-            "Brand6": "Description of Brand6",
-            "Brand7": "Description of Brand7",
-            "Brand8": "Description of Brand8",
-            "Brand9": "Description of Brand9",
-            "Brand10": "Description of Brand10",
-            "Brand11": "Description of Brand11",
-            "Brand12": "Description of Brand12",
-            "Brand13": "Description of Brand13",
-            "Brand14": "Description of Brand14",
-            "Brand15": "Description of Brand15",
-            "Brand16": "Description of Brand16",
-            "Brand17": "Description of Brand17",
-            "Brand18": "Description of Brand18",
-            "Brand19": "Description of Brand19",
-            "Brand20": "Description of Brand20"
+            "BrandA": "BrandA is known for its durability and efficiency. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "BrandB": "BrandB offers excellent value for money. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandC": "BrandC is famous for its sleek design. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "BrandD": "BrandD has high-end products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
+            "BrandE": "BrandE is known for its accessibility. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor.",
+            "BrandF": "BrandF is innovative. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "BrandG": "BrandG is synonymous with quality. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "BrandH": "BrandH is known for its robust design. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
+            "BrandI": "BrandI offers affordable products. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandJ": "BrandJ is popular among youth. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor.",
+            "BrandK": "BrandK is known for energy efficiency. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "BrandL": "BrandL offers high durability. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "BrandM": "BrandM is known for technical support. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
+            "BrandN": "BrandN stands out for its low cost. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandO": "BrandO is synonymous with elegant design. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "BrandP": "BrandP is known for its versatility. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "BrandQ": "BrandQ offers luxury products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
+            "BrandR": "BrandR is known for its reliability. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandS": "BrandS stands out for technological innovation. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "BrandT": "BrandT is popular in the market. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor."
         },
         "work_actions": ["Start of workday", "Arrival at project", "Break", "Leaving project", "End of workday"],
         "configure_notifications": "Configure Custom Notifications",
@@ -216,16 +223,6 @@ translations = {
         "data_saved": "Data saved"
     }
 }
-
-# Selección de idioma
-st.markdown("<h1 style='text-align: center;'>Aplicación Hootsi</h1>", unsafe_allow_html=True)
-lang = st.selectbox("", ["es", "en"], index=0)
-
-t = translations[lang]
-
-# Variables globales para almacenar horas de check-in y check-out
-check_in_times = {}
-check_out_times = {}
 
 # Función para obtener la geolocalización de una ciudad
 def get_city_location(city):
@@ -254,8 +251,13 @@ def get_city_location(city):
     }
     return locations.get(city, {"latitude": 0.0, "longitude": 0.0})
 
+# Variables globales para almacenar horas de check-in y check-out
+check_in_times = {}
+check_out_times = {}
+
 # Definir las funciones de notificación
 def notificate_check_in():
+    t = translations[lang]
     st.header(t['check_in_notification'])
 
     name = st.text_input(t['name'])
@@ -276,6 +278,7 @@ def notificate_check_in():
         st.map(pd.DataFrame({'lat': [location['latitude']], 'lon': [location['longitude']]}))
 
 def notificate_clock_out():
+    t = translations[lang]
     st.header(t['clock_out_notification'])
 
     name = st.text_input(t['name'])
@@ -301,6 +304,7 @@ def notificate_clock_out():
 
 # Función de configuración de notificaciones personalizadas
 def configure_notifications():
+    t = translations[lang]
     st.header(t['configure_notifications'])
 
     notification_type = st.selectbox(t['select_action'], [t['inventory_below_threshold'], t['break_time_exceeded']])
@@ -313,6 +317,7 @@ def configure_notifications():
 
 # Función de dashboard de reportes
 def dashboard():
+    t = translations[lang]
     st.header(t['dashboard'])
 
     # Gráficos de Check-In y Clock-Out
@@ -366,71 +371,38 @@ def dashboard():
     st.pyplot(fig1)
     st.pyplot(fig2)
 
-    # KPIs de nivel ejecutivo y táctico
-    st.subheader("KPIs")
-    total_inventory_value = (df['quantity'] * df['price']).sum()
-    avg_inventory_price = df['price'].mean()
-    st.metric("Total Inventory Value", f"${total_inventory_value:,.2f}")
-    st.metric("Average Inventory Price", f"${avg_inventory_price:.2f}")
-
-    # Descargar el informe en PDF
-    def download_report_as_pdf():
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", size=12)
-        pdf.cell(200, 10, txt="Inventory Report", ln=True, align="C")
-        pdf.cell(200, 10, txt=f"Total Inventory Value: ${total_inventory_value:,.2f}", ln=True)
-        pdf.cell(200, 10, txt=f"Average Inventory Price: ${avg_inventory_price:.2f}", ln=True)
-        pdf.output("inventory_report.pdf")
-        with open("inventory_report.pdf", "rb") as f:
-            st.download_button("Download Report as PDF", f, file_name="inventory_report.pdf")
-
-    download_report_as_pdf()
-
 # Función de análisis predictivo
 def predict_inventory():
+    t = translations[lang]
     st.header(t['predict_inventory'])
 
     selected_brand = st.selectbox(t['select_brand'], brands)
     selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
     prediction_days = st.selectbox("Select prediction period (days)", [30, 60, 90, 120])
-    models = st.selectbox("Select a forecasting model", ["Linear Regression", "Exponential Smoothing", "ARIMA", "Prophet"])
 
     # Filtrar datos históricos por marca y bodega
-    historical_data = df_inventory[(df_inventory['brand'] == selected_brand) & (df_inventory['warehouse'] == selected_warehouse)]
+    historical_data = [inv for inv in inventories if inv['brand'] == selected_brand and inv['warehouse'] == selected_warehouse]
 
-    if historical_data.empty:
+    if not historical_data:
         st.write(t['no_data_available'])
     else:
-        df = historical_data.groupby('date').agg({'quantity': 'sum'}).reset_index()
-        df['day'] = (df['date'] - df['date'].min()).dt.days
+        df = pd.DataFrame(historical_data)
+        df['day'] = range(1, len(df) + 1)  # Asumimos un día por cada registro
         X = df['day'].values.reshape(-1, 1)
         y = df['quantity'].values
 
-        if models == "Linear Regression":
-            model = LinearRegression()
-            model.fit(X, y)
-            future_days = np.array(range(df['day'].max() + 1, df['day'].max() + 1 + prediction_days)).reshape(-1, 1)
-            predicted_quantities = model.predict(future_days)
-        elif models == "Exponential Smoothing":
-            model = ExponentialSmoothing(y, seasonal='add', seasonal_periods=12).fit()
-            predicted_quantities = model.forecast(prediction_days)
-        elif models == "ARIMA":
-            model = ARIMA(y, order=(5, 1, 0)).fit()
-            predicted_quantities = model.forecast(prediction_days)
-        elif models == "Prophet":
-            df_prophet = df[['date', 'quantity']].rename(columns={'date': 'ds', 'quantity': 'y'})
-            model = Prophet()
-            model.fit(df_prophet)
-            future = model.make_future_dataframe(periods=prediction_days)
-            forecast = model.predict(future)
-            predicted_quantities = forecast['yhat'].tail(prediction_days).values
+        model = LinearRegression()
+        model.fit(X, y)
+
+        future_days = np.array(range(len(df) + 1, len(df) + 1 + prediction_days)).reshape(-1, 1)
+        predicted_quantities = model.predict(future_days)
 
         st.write(t['predictions_for_inventory'])
         st.line_chart(predicted_quantities)
 
 # Función de gestión de proyectos
 def project_management():
+    t = translations[lang]
     st.header(t['project_management'])
 
     project_name = st.text_input(t['name'])
@@ -446,6 +418,7 @@ def project_management():
 
 # Función de seguimiento de inventario
 def track_inventory():
+    t = translations[lang]
     st.header(t['inventory_tracking'])
 
     action = st.selectbox(t['select_action'], [t['view_inventory'], t['mark_items'], t['reserve_products'], t['search_specifications'], t['audit_inventory']])
@@ -536,6 +509,7 @@ def track_inventory():
 
 # Función de seguimiento de horas trabajadas
 def track_work_hours():
+    t = translations[lang]
     st.header(t['work_hours_tracking'])
 
     name = st.text_input(t['name'])
@@ -554,9 +528,29 @@ def track_work_hours():
 
         if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
             st.write(f'{t["sent_email_with_timesheet"]} {role}')
-            st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
+            st.write(f'{t["email_sent_to"]}: example@example.com')
+
+# Función para descargar el informe como PDF
+def download_report_as_pdf():
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="Dashboard Report", ln=True, align='C')
+
+    for img_path in ["brand_plot.png", "warehouse_plot.png"]:
+        pdf.image(img_path, x=10, y=20, w=100)
+        pdf.ln(85)  # Adjust this value based on the image height
+
+    pdf.output("dashboard_report.pdf")
+    st.success("Report downloaded successfully!")
 
 # Opciones de la interfaz
+st.markdown("<h1 style='text-align: center;'>Options</h1>", unsafe_allow_html=True)
+lang = st.selectbox("", ["es", "en"], index=0)
+t = translations[lang]
+
+st.title(t['title'])  # Aseguramos que el título esté siempre en la parte superior
+
 option = option_menu(
     menu_title=None,
     options=[
@@ -591,4 +585,9 @@ elif option == t['predict_inventory']:
     predict_inventory()
 elif option == t['project_management']:
     project_management()
+
+# Botón para descargar el informe como PDF
+if st.button("Download Report as PDF"):
+    download_report_as_pdf()
+
 
