@@ -361,12 +361,14 @@ def dashboard():
     ax1.set_title(t['inventory_by_brand'])
     ax1.set_xlabel(t['select_brand'])
     ax1.set_ylabel("Quantity")
+    fig1.savefig("brand_plot.png")
 
     fig2, ax2 = plt.subplots()
     warehouse_counts.plot(kind='bar', ax=ax2)
     ax2.set_title(t['inventory_by_warehouse'])
     ax2.set_xlabel(t['select_warehouse'])
     ax2.set_ylabel("Quantity")
+    fig2.savefig("warehouse_plot.png")
 
     st.pyplot(fig1)
     st.pyplot(fig2)
@@ -379,6 +381,7 @@ def predict_inventory():
     selected_brand = st.selectbox(t['select_brand'], brands)
     selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
     prediction_days = st.selectbox("Select prediction period (days)", [30, 60, 90, 120])
+    model_type = st.selectbox("Select prediction model", ["Linear Regression", "Exponential Smoothing", "ARIMA", "Prophet"])
 
     # Filtrar datos históricos por marca y bodega
     historical_data = [inv for inv in inventories if inv['brand'] == selected_brand and inv['warehouse'] == selected_warehouse]
@@ -387,15 +390,39 @@ def predict_inventory():
         st.write(t['no_data_available'])
     else:
         df = pd.DataFrame(historical_data)
-        df['day'] = range(1, len(df) + 1)  # Asumimos un día por cada registro
-        X = df['day'].values.reshape(-1, 1)
-        y = df['quantity'].values
+        df['date'] = pd.to_datetime(df['date'])
+        df.set_index('date', inplace=True)
+        df = df.resample('M').sum()
 
-        model = LinearRegression()
-        model.fit(X, y)
+        if model_type == "Linear Regression":
+            df['month'] = range(1, len(df) + 1)
+            X = df['month'].values.reshape(-1, 1)
+            y = df['quantity'].values
 
-        future_days = np.array(range(len(df) + 1, len(df) + 1 + prediction_days)).reshape(-1, 1)
-        predicted_quantities = model.predict(future_days)
+            model = LinearRegression()
+            model.fit(X, y)
+
+            future_months = np.array(range(len(df) + 1, len(df) + 1 + prediction_days)).reshape(-1, 1)
+            predicted_quantities = model.predict(future_months)
+        
+        elif model_type == "Exponential Smoothing":
+            model = ExponentialSmoothing(df['quantity'], seasonal='add', seasonal_periods=12)
+            model_fit = model.fit()
+            predicted_quantities = model_fit.forecast(prediction_days)
+        
+        elif model_type == "ARIMA":
+            model = ARIMA(df['quantity'], order=(5, 1, 0))
+            model_fit = model.fit()
+            predicted_quantities = model_fit.forecast(steps=prediction_days)
+        
+        elif model_type == "Prophet":
+            df.reset_index(inplace=True)
+            df.rename(columns={'date': 'ds', 'quantity': 'y'}, inplace=True)
+            model = Prophet()
+            model.fit(df)
+            future = model.make_future_dataframe(periods=prediction_days)
+            forecast = model.predict(future)
+            predicted_quantities = forecast['yhat'].values[-prediction_days:]
 
         st.write(t['predictions_for_inventory'])
         st.line_chart(predicted_quantities)
@@ -545,11 +572,11 @@ def download_report_as_pdf():
     st.success("Report downloaded successfully!")
 
 # Opciones de la interfaz
-st.markdown("<h1 style='text-align: center;'>Options</h1>", unsafe_allow_html=True)
+st.title(translations['es']['title'])  # Aseguramos que el título esté siempre en la parte superior
 lang = st.selectbox("", ["es", "en"], index=0)
 t = translations[lang]
 
-st.title(t['title'])  # Aseguramos que el título esté siempre en la parte superior
+st.markdown("<h1 style='text-align: center;'>Options</h1>", unsafe_allow_html=True)
 
 option = option_menu(
     menu_title=None,
@@ -589,5 +616,6 @@ elif option == t['project_management']:
 # Botón para descargar el informe como PDF
 if st.button("Download Report as PDF"):
     download_report_as_pdf()
+
 
 
