@@ -11,33 +11,40 @@ from streamlit_option_menu import option_menu
 import plotly.express as px
 import plotly.graph_objects as go
 from fpdf import FPDF
-from io import BytesIO
+
+# Definir categorías
+categories = ['Tecnología', 'Comunicaciones', 'Vehículos', 'Electrodomésticos', 'Muebles', 'Alimentos', 'Bebidas', 'Juguetes', 'Ropa', 'Calzado']
 
 # Generar datos de inventario simulados
-brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE', 'BrandF', 'BrandG', 'BrandH', 'BrandI', 'BrandJ', 
-          'BrandK', 'BrandL', 'BrandM', 'BrandN', 'BrandO', 'BrandP', 'BrandQ', 'BrandR', 'BrandS', 'BrandT']
-categories = ['Tecnología', 'Comunicaciones', 'Vehículos', 'Electrodomésticos', 'Muebles', 'Ropa', 'Juguetes', 'Libros']
-warehouses = ['Warehouse' + str(i) for i in range(1, 21)]
-us_cities = [
-    "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
-    "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA",
-    "Austin, TX", "Jacksonville, FL", "Fort Worth, TX", "Columbus, OH", "Charlotte, NC",
-    "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Washington, DC"
+brands = [f'Brand{i}' for i in range(1, 21)]
+warehouses = [f'Warehouse{i}' for i in range(1, 21)]
+locations = ["New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ", "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA", "Austin, TX", "Jacksonville, FL", "Fort Worth, TX", "Columbus, OH", "Charlotte, NC", "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Washington, DC"]
+
+inventories = []
+for i in range(1, 201):
+    brand = random.choice(brands)
+    category = random.choice(categories)
+    warehouse = random.choice(warehouses)
+    location = locations[warehouses.index(warehouse)]
+    for month in pd.date_range(start='2019-01-01', end='2023-12-31', freq='M'):
+        quantity = random.randint(50, 200)
+        price = random.uniform(20.0, 1000.0)
+        inventories.append({
+            "id": i, "brand": brand, "category": category, "warehouse": warehouse, "location": location,
+            "quantity": quantity, "price": price, "date": month
+        })
+
+users = [
+    {"id": 1, "name": "TechnicianA", "warehouse_id": 1, "projects": [], "working_hours": []},
+    {"id": 2, "name": "TechnicianB", "warehouse_id": 2, "projects": [], "working_hours": []},
 ]
 
-# Generar datos históricos
-dates = pd.date_range(start='2018-01-01', end='2023-12-01', freq='MS')
-data = []
-for brand in brands:
-    category = random.choice(categories)
-    for warehouse, city in zip(warehouses, us_cities):
-        for date in dates:
-            quantity = random.randint(50, 200)
-            data.append([date, brand, category, warehouse, city, quantity])
+work_hours_records = []
+check_in_records = []
+clock_out_records = []
+project_management_records = []
 
-inventory_df = pd.DataFrame(data, columns=['Date', 'Brand', 'Category', 'Warehouse', 'City', 'Quantity'])
-
-# Traducción
+# Diccionario para soporte bilingüe con especificaciones
 translations = {
     "es": {
         "title": "Aplicación Hootsi",
@@ -70,6 +77,7 @@ translations = {
         "english": "Inglés",
         "select_warehouse": "Selecciona la bodega",
         "select_brand": "Selecciona la marca",
+        "select_category": "Selecciona la categoría",
         "no_data_available": "No hay datos disponibles",
         "name": "Nombre",
         "role": "Cargo",
@@ -79,6 +87,14 @@ translations = {
         "check_in_time": "Hora de check-in",
         "clock_out_time": "Hora de clock-out",
         "total_hours_worked": "Total de horas trabajadas",
+        "brand_specifications": {
+            "Brand1": "Brand1 es conocida por su durabilidad y eficiencia. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "Brand2": "Brand2 ofrece una excelente relación calidad-precio. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "Brand3": "Brand3 es famosa por su diseño elegante. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "Brand4": "Brand4 tiene productos de alta gama. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
+            "Brand5": "Brand5 es conocida por su accesibilidad. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium."
+        },
+        "work_actions": ["Inicio de jornada", "Llegada a proyecto", "Toma de descansos", "Salida de proyecto", "Fin de jornada"],
         "configure_notifications": "Configurar Notificaciones Personalizadas",
         "inventory_below_threshold": "Inventario bajo el umbral",
         "break_time_exceeded": "Tiempo de descanso excedido",
@@ -99,8 +115,7 @@ translations = {
         "current_location": "Ubicación actual",
         "inventory_by_brand": "Inventario por Marca",
         "inventory_by_warehouse": "Inventario por Bodega",
-        "data_saved": "Datos guardados",
-        "download_pdf": "Descargar Dashboard en PDF"
+        "data_saved": "Datos guardados"
     },
     "en": {
         "title": "Hootsi Application",
@@ -133,6 +148,7 @@ translations = {
         "english": "English",
         "select_warehouse": "Select the warehouse",
         "select_brand": "Select the brand",
+        "select_category": "Select the category",
         "no_data_available": "No data available",
         "name": "Name",
         "role": "Role",
@@ -142,6 +158,14 @@ translations = {
         "check_in_time": "Check-in time",
         "clock_out_time": "Clock-out time",
         "total_hours_worked": "Total hours worked",
+        "brand_specifications": {
+            "Brand1": "Brand1 is known for its durability and efficiency. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "Brand2": "Brand2 offers excellent value for money. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "Brand3": "Brand3 is famous for its sleek design. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "Brand4": "Brand4 has high-end products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
+            "Brand5": "Brand5 is known for its accessibility. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor."
+        },
+        "work_actions": ["Start of workday", "Arrival at project", "Break", "Leaving project", "End of workday"],
         "configure_notifications": "Configure Custom Notifications",
         "inventory_below_threshold": "Inventory Below Threshold",
         "break_time_exceeded": "Break Time Exceeded",
@@ -162,18 +186,16 @@ translations = {
         "current_location": "Current Location",
         "inventory_by_brand": "Inventory by Brand",
         "inventory_by_warehouse": "Inventory by Warehouse",
-        "data_saved": "Data saved",
-        "download_pdf": "Download Dashboard as PDF"
+        "data_saved": "Data saved"
     }
 }
 
 # Selección de idioma
-st.markdown("<h1 style='text-align: center;'>Options</h1>", unsafe_allow_html=True)
+st.title(translations['es']['title'])
+st.markdown("<h2 style='text-align: center;'>Options</h2>", unsafe_allow_html=True)
 lang = st.selectbox("", ["es", "en"], index=0)
 
 t = translations[lang]
-
-st.title(t['title'])  # Aseguramos que el título esté siempre en la parte superior
 
 # Variables globales para almacenar horas de check-in y check-out
 check_in_times = {}
@@ -213,7 +235,7 @@ def notificate_check_in():
     name = st.text_input(t['name'])
     role = st.text_input(t['role'])
     activity = st.text_input(t['activity'])
-    city = st.selectbox(t['location'], us_cities)
+    city = st.selectbox(t['location'], locations)
     location = get_city_location(city)
 
     if st.button(t['submit']):
@@ -233,7 +255,7 @@ def notificate_clock_out():
     name = st.text_input(t['name'])
     role = st.text_input(t['role'])
     activity = st.text_input(t['activity'])
-    city = st.selectbox(t['location'], us_cities)
+    city = st.selectbox(t['location'], locations)
     location = get_city_location(city)
 
     if st.button(t['submit']):
@@ -267,16 +289,6 @@ def configure_notifications():
 def dashboard():
     st.header(t['dashboard'])
 
-    # KPI
-    st.subheader("KPIs")
-    total_inventory = inventory_df['Quantity'].sum()
-    avg_inventory = inventory_df.groupby('Brand')['Quantity'].mean().mean()
-    max_inventory = inventory_df.groupby('Brand')['Quantity'].sum().max()
-
-    st.metric(label="Total Inventory", value=f"{total_inventory}")
-    st.metric(label="Average Inventory per Brand", value=f"{avg_inventory:.2f}")
-    st.metric(label="Maximum Inventory by Brand", value=f"{max_inventory}")
-
     # Gráficos de Check-In y Clock-Out
     if check_in_records or clock_out_records:
         st.subheader("Check-In and Clock-Out Records")
@@ -309,19 +321,24 @@ def dashboard():
 
     # Ejemplo de gráficos de inventario
     st.subheader("Inventory Records")
-    df = inventory_df
-    brand_counts = df.groupby('Brand')['Quantity'].sum().reset_index()
-    warehouse_counts = df.groupby('Warehouse')['Quantity'].sum().reset_index()
+    df = pd.DataFrame(inventories)
+    brand_counts = df.groupby('brand')['quantity'].sum()
+    warehouse_counts = df.groupby('warehouse')['quantity'].sum()
 
-    fig1 = px.bar(brand_counts, x='Brand', y='Quantity', title=t['inventory_by_brand'])
-    fig2 = px.bar(warehouse_counts, x='Warehouse', y='Quantity', title=t['inventory_by_warehouse'])
+    fig1, ax1 = plt.subplots()
+    brand_counts.plot(kind='bar', ax=ax1)
+    ax1.set_title(t['inventory_by_brand'])
+    ax1.set_xlabel(t['select_brand'])
+    ax1.set_ylabel("Quantity")
 
-    st.plotly_chart(fig1)
-    st.plotly_chart(fig2)
+    fig2, ax2 = plt.subplots()
+    warehouse_counts.plot(kind='bar', ax=ax2)
+    ax2.set_title(t['inventory_by_warehouse'])
+    ax2.set_xlabel(t['select_warehouse'])
+    ax2.set_ylabel("Quantity")
 
-    # Botón para descargar en PDF
-    if st.button(t['download_pdf']):
-        download_pdf()
+    st.pyplot(fig1)
+    st.pyplot(fig2)
 
 # Función de análisis predictivo
 def predict_inventory():
@@ -330,30 +347,27 @@ def predict_inventory():
     selected_brand = st.selectbox(t['select_brand'], brands)
     selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
     prediction_days = st.selectbox("Select prediction period (days)", [30, 60, 90, 120])
+    forecast_models = st.selectbox("Select forecast model", ["Linear Regression", "ARIMA", "Prophet", "Exponential Smoothing", "Moving Average", "Naive", "Drift", "Seasonal Naive", "Theta", "Croston"])
 
     # Filtrar datos históricos por marca y bodega
-    historical_data = inventory_df[(inventory_df['Brand'] == selected_brand) & (inventory_df['Warehouse'] == selected_warehouse)]
+    historical_data = [inv for inv in inventories if inv['brand'] == selected_brand and inv['warehouse'] == selected_warehouse]
 
-    if historical_data.empty:
+    if not historical_data:
         st.write(t['no_data_available'])
     else:
-        df = historical_data
-        df['Day'] = (df['Date'] - df['Date'].min()).dt.days
-        X = df['Day'].values.reshape(-1, 1)
-        y = df['Quantity'].values
+        df = pd.DataFrame(historical_data)
+        df['day'] = range(1, len(df) + 1)  # Asumimos un día por cada registro
+        X = df['day'].values.reshape(-1, 1)
+        y = df['quantity'].values
 
         model = LinearRegression()
         model.fit(X, y)
 
-        future_days = np.array(range(df['Day'].max() + 1, df['Day'].max() + 1 + prediction_days)).reshape(-1, 1)
+        future_days = np.array(range(len(df) + 1, len(df) + 1 + prediction_days)).reshape(-1, 1)
         predicted_quantities = model.predict(future_days)
 
-        prediction_dates = pd.date_range(start=df['Date'].max() + pd.Timedelta(days=1), periods=prediction_days, freq='D')
-        prediction_df = pd.DataFrame({'Date': prediction_dates, 'Predicted Quantity': predicted_quantities})
-
         st.write(t['predictions_for_inventory'])
-        fig = px.line(prediction_df, x='Date', y='Predicted Quantity', title=f'Predicted Inventory for {selected_brand} in {selected_warehouse}')
-        st.plotly_chart(fig)
+        st.line_chart(predicted_quantities)
 
 # Función de gestión de proyectos
 def project_management():
@@ -383,24 +397,33 @@ def track_inventory():
         selected_brand = st.selectbox(t['select_brand'], brands)
         selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
 
-        df = inventory_df
+        df = pd.DataFrame(inventories)
 
         if selected_brand:
-            df = df[df['Brand'] == selected_brand]
+            df = df[df['brand'] == selected_brand]
         if selected_warehouse:
-            df = df[df['Warehouse'] == selected_warehouse]
+            df = df[df['warehouse'] == selected_warehouse]
 
         if df.empty:
             st.write(t['no_data_available'])
         else:
-            brand_counts = df.groupby('Brand')['Quantity'].sum()
-            warehouse_counts = df.groupby('Warehouse')['Quantity'].sum()
+            brand_counts = df.groupby('brand')['quantity'].sum()
+            warehouse_counts = df.groupby('warehouse')['quantity'].sum()
 
-            fig1 = px.bar(brand_counts.reset_index(), x='Brand', y='Quantity', title=t['inventory_by_brand'])
-            fig2 = px.bar(warehouse_counts.reset_index(), x='Warehouse', y='Quantity', title=t['inventory_by_warehouse'])
+            fig1, ax1 = plt.subplots()
+            brand_counts.plot(kind='bar', ax=ax1)
+            ax1.set_title(t['inventory_by_brand'])
+            ax1.set_xlabel(t['select_brand'])
+            ax1.set_ylabel("Quantity")
 
-            st.plotly_chart(fig1)
-            st.plotly_chart(fig2)
+            fig2, ax2 = plt.subplots()
+            warehouse_counts.plot(kind='bar', ax=ax2)
+            ax2.set_title(t['inventory_by_warehouse'])
+            ax2.set_xlabel(t['select_warehouse'])
+            ax2.set_ylabel("Quantity")
+
+            st.pyplot(fig1)
+            st.pyplot(fig2)
 
     elif action == t['mark_items']:
         brand = st.selectbox(t['select_brand'], brands)
@@ -443,8 +466,13 @@ def track_inventory():
             df = pd.DataFrame(filtered_inventories)
             brand_counts = df.groupby('brand')['quantity'].sum()
 
-            fig = px.bar(brand_counts.reset_index(), x='brand', y='quantity', title=f"{t['inventory_by_warehouse']} {warehouse}")
-            st.plotly_chart(fig)
+            fig, ax = plt.subplots()
+            brand_counts.plot(kind='bar', ax=ax)
+            ax.set_title(f"{t['inventory_by_warehouse']} {warehouse}")
+            ax.set_xlabel("Brand")
+            ax.set_ylabel("Quantity")
+
+            st.pyplot(fig)
 
 # Función de seguimiento de horas trabajadas
 def track_work_hours():
@@ -454,7 +482,7 @@ def track_work_hours():
     role_category = st.selectbox(t['select_action'], list(roles.keys()))
     role = st.selectbox(t['select_technician'], roles[role_category])
     action = st.selectbox(t['select_action'], t['work_actions'])
-    city = st.selectbox(t['location'], us_cities)
+    city = st.selectbox(t['location'], locations)
     location = get_city_location(city)
 
     if st.button(t['register']):
@@ -467,6 +495,22 @@ def track_work_hours():
         if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
             st.write(f'{t["sent_email_with_timesheet"]} {role}')
             st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
+
+# Función para descargar gráficos en PDF
+def download_report_as_pdf():
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+
+    # Agregar gráficos al PDF
+    pdf.cell(200, 10, txt="Hootsi Report", ln=True, align='C')
+    for img_path in ["check_in_records.png", "clock_out_records.png", "work_hours_records.png", "project_management_records.png", "inventory_records.png"]:
+        pdf.image(img_path, x=10, y=None, w=190)
+
+    # Guardar el PDF
+    pdf.output("Hootsi_Report.pdf")
+    with open("Hootsi_Report.pdf", "rb") as f:
+        st.download_button("Download Report", f, file_name="Hootsi_Report.pdf")
 
 # Opciones de la interfaz
 option = option_menu(
@@ -504,26 +548,7 @@ elif option == t['predict_inventory']:
 elif option == t['project_management']:
     project_management()
 
-def download_pdf():
-    pdf = FPDF()
-    pdf.add_page()
-    
-    pdf.set_font("Arial", size = 12)
-    
-    pdf.cell(200, 10, txt = t['title'], ln = True, align = 'C')
-    
-    buffer = BytesIO()
-    plt.savefig(buffer, format='pdf')
-    buffer.seek(0)
-    
-    pdf.output(buffer)
-    
-    st.download_button(
-        label=t['download_pdf'],
-        data=buffer,
-        file_name="dashboard_report.pdf",
-        mime="application/pdf"
-    )
-
-
+# Descargar reporte en PDF
+if option == t['dashboard']:
+    st.button("Download Report as PDF", on_click=download_report_as_pdf)
 
