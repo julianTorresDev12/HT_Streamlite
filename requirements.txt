@@ -1,13 +1,10 @@
 streamlit
-streamlit_option_menu
 matplotlib
 pandas
 scikit-learn
-holidays
-pytz
-requests
-plotly
-fpdf
-PyYAML
+numpy
 statsmodels
 prophet
+fpdf
+streamlit-option-menu
+
