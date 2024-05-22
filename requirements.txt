@@ -10,4 +10,4 @@ plotly
 fpdf
 PyYAML
 statsmodels
-fbprophet
+prophet
