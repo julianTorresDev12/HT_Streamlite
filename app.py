@@ -8,31 +8,16 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from streamlit_option_menu import option_menu
-import plotly.express as px
-import plotly.graph_objects as go
 from fpdf import FPDF
 
-# Definir categorías
-categories = ['Tecnología', 'Comunicaciones', 'Vehículos', 'Electrodomésticos', 'Muebles', 'Alimentos', 'Bebidas', 'Juguetes', 'Ropa', 'Calzado']
-
 # Generar datos de inventario simulados
-brands = [f'Brand{i}' for i in range(1, 21)]
-warehouses = [f'Warehouse{i}' for i in range(1, 21)]
-locations = ["New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ", "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA", "Austin, TX", "Jacksonville, FL", "Fort Worth, TX", "Columbus, OH", "Charlotte, NC", "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Washington, DC"]
+brands = ['BrandA', 'BrandB', 'BrandC', 'BrandD', 'BrandE', 'BrandF', 'BrandG', 'BrandH', 'BrandI', 'BrandJ',
+          'BrandK', 'BrandL', 'BrandM', 'BrandN', 'BrandO', 'BrandP', 'BrandQ', 'BrandR', 'BrandS', 'BrandT']
+warehouses = ['Warehouse1', 'Warehouse2', 'Warehouse3', 'Warehouse4', 'Warehouse5', 'Warehouse6', 'Warehouse7',
+              'Warehouse8', 'Warehouse9', 'Warehouse10', 'Warehouse11', 'Warehouse12', 'Warehouse13', 'Warehouse14',
+              'Warehouse15', 'Warehouse16', 'Warehouse17', 'Warehouse18', 'Warehouse19', 'Warehouse20']
 
-inventories = []
-for i in range(1, 201):
-    brand = random.choice(brands)
-    category = random.choice(categories)
-    warehouse = random.choice(warehouses)
-    location = locations[warehouses.index(warehouse)]
-    for month in pd.date_range(start='2019-01-01', end='2023-12-31', freq='M'):
-        quantity = random.randint(50, 200)
-        price = random.uniform(20.0, 1000.0)
-        inventories.append({
-            "id": i, "brand": brand, "category": category, "warehouse": warehouse, "location": location,
-            "quantity": quantity, "price": price, "date": month
-        })
+inventories = [{"id": i, "brand": random.choice(brands), "warehouse": random.choice(warehouses), "quantity": random.randint(50, 200), "price": random.uniform(10, 1000)} for i in range(1, 201)]
 
 users = [
     {"id": 1, "name": "TechnicianA", "warehouse_id": 1, "projects": [], "working_hours": []},
@@ -43,6 +28,21 @@ work_hours_records = []
 check_in_records = []
 clock_out_records = []
 project_management_records = []
+
+# 20 ciudades más importantes de EE.UU.
+us_cities = [
+    "New York, NY", "Los Angeles, CA", "Chicago, IL", "Houston, TX", "Phoenix, AZ",
+    "Philadelphia, PA", "San Antonio, TX", "San Diego, CA", "Dallas, TX", "San Jose, CA",
+    "Austin, TX", "Jacksonville, FL", "Fort Worth, TX", "Columbus, OH", "Charlotte, NC",
+    "San Francisco, CA", "Indianapolis, IN", "Seattle, WA", "Denver, CO", "Washington, DC"
+]
+
+# Roles y cargos
+roles = {
+    "Administrative": ["CEO", "CFO", "COO", "VP of Operations", "Administrative Manager", "Office Assistant", "HR Manager", "Accountant", "Marketing Manager", "Analyst"],
+    "IT Team": ["VP of IT", "IT Manager", "Network Administrator", "System Administrator", "Database Administrator", "Software Engineer", "Developer"],
+    "Logistics Team": ["Logistics Manager", "Warehouse Supervisor", "Inventory Specialist", "Forklift Operator", "Shipping and Receiving Clerk"]
+}
 
 # Diccionario para soporte bilingüe con especificaciones
 translations = {
@@ -77,7 +77,6 @@ translations = {
         "english": "Inglés",
         "select_warehouse": "Selecciona la bodega",
         "select_brand": "Selecciona la marca",
-        "select_category": "Selecciona la categoría",
         "no_data_available": "No hay datos disponibles",
         "name": "Nombre",
         "role": "Cargo",
@@ -88,11 +87,26 @@ translations = {
         "clock_out_time": "Hora de clock-out",
         "total_hours_worked": "Total de horas trabajadas",
         "brand_specifications": {
-            "Brand1": "Brand1 es conocida por su durabilidad y eficiencia. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
-            "Brand2": "Brand2 ofrece una excelente relación calidad-precio. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
-            "Brand3": "Brand3 es famosa por su diseño elegante. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
-            "Brand4": "Brand4 tiene productos de alta gama. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
-            "Brand5": "Brand5 es conocida por su accesibilidad. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium."
+            "BrandA": "BrandA es conocida por su durabilidad y eficiencia. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5.",
+            "BrandB": "BrandB ofrece una excelente relación calidad-precio. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandC": "BrandC es famosa por su diseño elegante. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "BrandD": "BrandD tiene productos de alta gama. Especificaciones: 32GB RAM, 1TB SSD, Procesador Intel i9.",
+            "BrandE": "BrandE es conocida por su accesibilidad. Especificaciones: 2GB RAM, 64GB SSD, Procesador Intel Pentium.",
+            "BrandF": "BrandF es reconocida por su innovación tecnológica. Especificaciones: 16GB RAM, 1TB SSD, Procesador AMD Ryzen 7.",
+            "BrandG": "BrandG ofrece productos ecológicos. Especificaciones: 8GB RAM, 512GB SSD, Procesador Intel i5.",
+            "BrandH": "BrandH se especializa en productos de alta gama. Especificaciones: 32GB RAM, 2TB SSD, Procesador Intel i9.",
+            "BrandI": "BrandI proporciona soluciones de comunicación. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandJ": "BrandJ destaca en tecnología accesible. Especificaciones: 8GB RAM, 256GB SSD, Procesador AMD Ryzen 5.",
+            "BrandK": "BrandK ofrece dispositivos robustos para industria. Especificaciones: 16GB RAM, 1TB SSD, Procesador Intel i7.",
+            "BrandL": "BrandL es conocida por su diseño ergonómico. Especificaciones: 8GB RAM, 512GB SSD, Procesador Intel i5.",
+            "BrandM": "BrandM se enfoca en tecnología para el hogar. Especificaciones: 4GB RAM, 256GB SSD, Procesador Intel i3.",
+            "BrandN": "BrandN ofrece dispositivos con alta durabilidad. Especificaciones: 16GB RAM, 1TB SSD, Procesador Intel i7.",
+            "BrandO": "BrandO proporciona soluciones móviles. Especificaciones: 8GB RAM, 128GB SSD, Procesador Intel i5.",
+            "BrandP": "BrandP es líder en innovación de software. Especificaciones: 32GB RAM, 2TB SSD, Procesador Intel i9.",
+            "BrandQ": "BrandQ ofrece productos accesibles y eficientes. Especificaciones: 4GB RAM, 128GB SSD, Procesador Intel i3.",
+            "BrandR": "BrandR se especializa en dispositivos empresariales. Especificaciones: 16GB RAM, 512GB SSD, Procesador Intel i7.",
+            "BrandS": "BrandS proporciona soluciones para gaming. Especificaciones: 32GB RAM, 1TB SSD, Procesador AMD Ryzen 9.",
+            "BrandT": "BrandT destaca por su durabilidad y soporte. Especificaciones: 8GB RAM, 256GB SSD, Procesador Intel i5."
         },
         "work_actions": ["Inicio de jornada", "Llegada a proyecto", "Toma de descansos", "Salida de proyecto", "Fin de jornada"],
         "configure_notifications": "Configurar Notificaciones Personalizadas",
@@ -148,7 +162,6 @@ translations = {
         "english": "English",
         "select_warehouse": "Select the warehouse",
         "select_brand": "Select the brand",
-        "select_category": "Select the category",
         "no_data_available": "No data available",
         "name": "Name",
         "role": "Role",
@@ -159,11 +172,26 @@ translations = {
         "clock_out_time": "Clock-out time",
         "total_hours_worked": "Total hours worked",
         "brand_specifications": {
-            "Brand1": "Brand1 is known for its durability and efficiency. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
-            "Brand2": "Brand2 offers excellent value for money. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
-            "Brand3": "Brand3 is famous for its sleek design. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
-            "Brand4": "Brand4 has high-end products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
-            "Brand5": "Brand5 is known for its accessibility. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor."
+            "BrandA": "BrandA is known for its durability and efficiency. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor.",
+            "BrandB": "BrandB offers excellent value for money. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandC": "BrandC is famous for its sleek design. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "BrandD": "BrandD has high-end products. Specifications: 32GB RAM, 1TB SSD, Intel i9 Processor.",
+            "BrandE": "BrandE is known for its accessibility. Specifications: 2GB RAM, 64GB SSD, Intel Pentium Processor.",
+            "BrandF": "BrandF is recognized for its technological innovation. Specifications: 16GB RAM, 1TB SSD, AMD Ryzen 7 Processor.",
+            "BrandG": "BrandG offers eco-friendly products. Specifications: 8GB RAM, 512GB SSD, Intel i5 Processor.",
+            "BrandH": "BrandH specializes in high-end products. Specifications: 32GB RAM, 2TB SSD, Intel i9 Processor.",
+            "BrandI": "BrandI provides communication solutions. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandJ": "BrandJ excels in affordable technology. Specifications: 8GB RAM, 256GB SSD, AMD Ryzen 5 Processor.",
+            "BrandK": "BrandK offers robust devices for industry. Specifications: 16GB RAM, 1TB SSD, Intel i7 Processor.",
+            "BrandL": "BrandL is known for its ergonomic design. Specifications: 8GB RAM, 512GB SSD, Intel i5 Processor.",
+            "BrandM": "BrandM focuses on home technology. Specifications: 4GB RAM, 256GB SSD, Intel i3 Processor.",
+            "BrandN": "BrandN offers highly durable devices. Specifications: 16GB RAM, 1TB SSD, Intel i7 Processor.",
+            "BrandO": "BrandO provides mobile solutions. Specifications: 8GB RAM, 128GB SSD, Intel i5 Processor.",
+            "BrandP": "BrandP leads in software innovation. Specifications: 32GB RAM, 2TB SSD, Intel i9 Processor.",
+            "BrandQ": "BrandQ offers affordable and efficient products. Specifications: 4GB RAM, 128GB SSD, Intel i3 Processor.",
+            "BrandR": "BrandR specializes in enterprise devices. Specifications: 16GB RAM, 512GB SSD, Intel i7 Processor.",
+            "BrandS": "BrandS provides gaming solutions. Specifications: 32GB RAM, 1TB SSD, AMD Ryzen 9 Processor.",
+            "BrandT": "BrandT excels in durability and support. Specifications: 8GB RAM, 256GB SSD, Intel i5 Processor."
         },
         "work_actions": ["Start of workday", "Arrival at project", "Break", "Leaving project", "End of workday"],
         "configure_notifications": "Configure Custom Notifications",
@@ -191,11 +219,12 @@ translations = {
 }
 
 # Selección de idioma
-st.title(translations['es']['title'])
-st.markdown("<h2 style='text-align: center;'>Options</h2>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>Aplicación Hootsi</h1>", unsafe_allow_html=True)
 lang = st.selectbox("", ["es", "en"], index=0)
 
 t = translations[lang]
+
+st.markdown("<h2 style='text-align: center;'>Options</h2>", unsafe_allow_html=True)
 
 # Variables globales para almacenar horas de check-in y check-out
 check_in_times = {}
@@ -235,7 +264,7 @@ def notificate_check_in():
     name = st.text_input(t['name'])
     role = st.text_input(t['role'])
     activity = st.text_input(t['activity'])
-    city = st.selectbox(t['location'], locations)
+    city = st.selectbox(t['location'], us_cities)
     location = get_city_location(city)
 
     if st.button(t['submit']):
@@ -255,7 +284,7 @@ def notificate_clock_out():
     name = st.text_input(t['name'])
     role = st.text_input(t['role'])
     activity = st.text_input(t['activity'])
-    city = st.selectbox(t['location'], locations)
+    city = st.selectbox(t['location'], us_cities)
     location = get_city_location(city)
 
     if st.button(t['submit']):
@@ -347,7 +376,7 @@ def predict_inventory():
     selected_brand = st.selectbox(t['select_brand'], brands)
     selected_warehouse = st.selectbox(t['select_warehouse'], warehouses)
     prediction_days = st.selectbox("Select prediction period (days)", [30, 60, 90, 120])
-    forecast_models = st.selectbox("Select forecast model", ["Linear Regression", "ARIMA", "Prophet", "Exponential Smoothing", "Moving Average", "Naive", "Drift", "Seasonal Naive", "Theta", "Croston"])
+    forecasting_models = st.selectbox("Select forecasting model", ["Linear Regression", "ARIMA", "Prophet", "Holt-Winters", "SARIMA", "Random Forest", "XGBoost", "Neural Network", "LSTM", "Ensemble"])
 
     # Filtrar datos históricos por marca y bodega
     historical_data = [inv for inv in inventories if inv['brand'] == selected_brand and inv['warehouse'] == selected_warehouse]
@@ -482,7 +511,7 @@ def track_work_hours():
     role_category = st.selectbox(t['select_action'], list(roles.keys()))
     role = st.selectbox(t['select_technician'], roles[role_category])
     action = st.selectbox(t['select_action'], t['work_actions'])
-    city = st.selectbox(t['location'], locations)
+    city = st.selectbox(t['location'], us_cities)
     location = get_city_location(city)
 
     if st.button(t['register']):
@@ -495,22 +524,6 @@ def track_work_hours():
         if action == t['work_actions'][-1]:  # If action is 'Fin de jornada' or 'End of workday'
             st.write(f'{t["sent_email_with_timesheet"]} {role}')
             st.write(f'{t["email_sent_to"]}: julian.torres@ahtglobal.com')
-
-# Función para descargar gráficos en PDF
-def download_report_as_pdf():
-    pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-
-    # Agregar gráficos al PDF
-    pdf.cell(200, 10, txt="Hootsi Report", ln=True, align='C')
-    for img_path in ["check_in_records.png", "clock_out_records.png", "work_hours_records.png", "project_management_records.png", "inventory_records.png"]:
-        pdf.image(img_path, x=10, y=None, w=190)
-
-    # Guardar el PDF
-    pdf.output("Hootsi_Report.pdf")
-    with open("Hootsi_Report.pdf", "rb") as f:
-        st.download_button("Download Report", f, file_name="Hootsi_Report.pdf")
 
 # Opciones de la interfaz
 option = option_menu(
@@ -551,4 +564,3 @@ elif option == t['project_management']:
 # Descargar reporte en PDF
 if option == t['dashboard']:
     st.button("Download Report as PDF", on_click=download_report_as_pdf)
-
