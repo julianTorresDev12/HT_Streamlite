@@ -1,9 +1,11 @@
 streamlit
+streamlit_option_menu
 matplotlib
 pandas
 scikit-learn
+holidays
 pytz
 requests
-numpy
 plotly
-streamlit-option-menu
+fpdf
+PyYAML
